@@ -68,5 +68,6 @@
 
 ## 公開情報
 
-- GAS ウェブアプリURL：（デプロイ後に記入）
-- deploymentId：（デプロイ後に記入）
+- GAS ウェブアプリURL：https://script.google.com/macros/s/AKfycbxeHMXOCjEd1-VPHxlM3yyty6kzxCYo2NmnRS3sBOj0piYlnOSu66i6Lpg7Yr9HceaE/exec
+- deploymentId：AKfycbxeHMXOCjEd1-VPHxlM3yyty6kzxCYo2NmnRS3sBOj0piYlnOSu66i6Lpg7Yr9HceaE（@1・2026-10-15）
+- 初回だけ所有者がスクリプトの権限を承認する必要がある（スクリプトエディタで setupDashboard を実行→承認）。未承認だと exec が「アクセス権が必要です」を返す

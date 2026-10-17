@@ -69,5 +69,7 @@
 ## 公開情報
 
 - GAS ウェブアプリURL：https://script.google.com/macros/s/AKfycbxeHMXOCjEd1-VPHxlM3yyty6kzxCYo2NmnRS3sBOj0piYlnOSu66i6Lpg7Yr9HceaE/exec
-- deploymentId：AKfycbxeHMXOCjEd1-VPHxlM3yyty6kzxCYo2NmnRS3sBOj0piYlnOSu66i6Lpg7Yr9HceaE（@1・2026-10-15）
-- 初回だけ所有者がスクリプトの権限を承認する必要がある（スクリプトエディタで setupDashboard を実行→承認）。未承認だと exec が「アクセス権が必要です」を返す
+- deploymentId：AKfycbxeHMXOCjEd1-VPHxlM3yyty6kzxCYo2NmnRS3sBOj0piYlnOSu66i6Lpg7Yr9HceaE（@3・2026-10-17 更新。URLは@1から変わっていない）
+- 初回の権限承認は 2026-10-17 に石島さんが実施済み。未承認だと exec が「アクセス権が必要です」を返す
+- 検証用GET：`?action=ping`／`?action=setup`（ダッシュボード作り直し）／`?action=count&deviceId=…`／`?action=cleanup_test`（受講者名「接続テスト」「動作確認テスト」の行だけ削除）
+- clasp のトークンは失効しやすい（`invalid_rapt`）。`clasp push` が失敗したら `clasp login` で再認証

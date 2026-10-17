@@ -11,7 +11,7 @@ function sheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName(SHEET_LOG);
   if (!sh) { sh = ss.insertSheet(SHEET_LOG); }
-  if (sh.getLastRow() === 0) { sh.appendRow(HEADER); sh.setFrozenRows(1); }
+  if (sh.getLastRow() === 0) { sh.appendRow(HEADER); sh.setFrozenRows(1); sh.getRange("A:A").setNumberFormat("yyyy/mm/dd hh:mm"); sh.getRange("P:P").setNumberFormat("yyyy/mm/dd hh:mm"); sh.getRange("J:J").setNumberFormat("0%"); }
   return sh;
 }
 
@@ -60,6 +60,23 @@ function doGet(e) {
   const p = (e && e.parameter) || {};
   if (p.action === "ping") return json_({ ok: true });
   if (p.action === "setup") { setupDashboard(); return json_({ ok: true, setup: true }); }
+  if (p.action === "count") {
+    // 受講者（端末ID）ごとの行数。検証用
+    const sh = sheet_(); const last = sh.getLastRow(); if (last < 2) return json_({ count: 0 });
+    const col = HEADER.indexOf("端末ID") + 1;
+    const vals = sh.getRange(2, col, last - 1, 1).getValues().map(r => String(r[0]));
+    return json_({ count: vals.filter(v => v === String(p.deviceId || "")).length });
+  }
+  if (p.action === "cleanup_test") {
+    // 端末ID "test-device" の行だけ消す（接続テスト用。実データは触らない）
+    const sh = sheet_(); const last = sh.getLastRow(); let removed = 0;
+    if (last >= 2) {
+      const col = HEADER.indexOf("端末ID") + 1;
+      const vals = sh.getRange(2, col, last - 1, 1).getValues();
+      for (let i = vals.length - 1; i >= 0; i--) { if (String(vals[i][0]) === "test-device") { sh.deleteRow(i + 2); removed++; } }
+    }
+    return json_({ removed });
+  }
   if (p.action === "ack") {
     const ids = String(p.ids || "").split(",").filter(Boolean);
     const seen = existingIds_(sheet_());
@@ -77,10 +94,13 @@ function setupDashboard() {
   d.clear();
   d.getRange("A1").setValue("受講者ごとの到達（クリア済みステージ数・最終学習日）");
   d.getRange("A3").setFormula('=IFERROR(QUERY(\'進捗ログ\'!A2:N, "select B, count(F), max(A) where K = \'クリア\' group by B label B \'受講者\', count(F) \'クリア記録数\', max(A) \'最終学習\'", 0), "まだ記録がありません")');
+  d.getRange("C3:C9").setNumberFormat("yyyy/mm/dd hh:mm");
   d.getRange("A10").setValue("受講者×章（クリア済みのステージ数）");
-  d.getRange("A12").setFormula('=IFERROR(QUERY(\'進捗ログ\'!A2:N, "select B, E, count(F) where K = \'クリア\' group by B pivot E", 0), "")');
+  d.getRange("A12").setFormula('=IFERROR(QUERY(\'進捗ログ\'!A2:N, "select B, count(F) where K = \'クリア\' group by B pivot E label B \'受講者\'", 0), "")');
   d.getRange("A20").setValue("弱い出典（未達になった回の出典を集計）");
   d.getRange("A22").setFormula('=IFERROR(QUERY(\'進捗ログ\'!A2:N, "select M, count(M) where K = \'未達\' and M <> \'\' group by M order by count(M) desc label M \'出典\', count(M) \'回数\'", 0), "")');
+  const def = ss.getSheetByName("シート1") || ss.getSheetByName("Sheet1");
+  if (def && def.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(def);
   let r = ss.getSheetByName("README");
   if (!r) r = ss.insertSheet("README", 0);
   r.clear();

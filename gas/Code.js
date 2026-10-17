@@ -68,12 +68,12 @@ function doGet(e) {
     return json_({ count: vals.filter(v => v === String(p.deviceId || "")).length });
   }
   if (p.action === "cleanup_test") {
-    // 端末ID "test-device" の行だけ消す（接続テスト用。実データは触らない）
+    // 接続テストの行だけ消す（受講者名が「接続テスト」「動作確認テスト」のもの。実データは触らない）
     const sh = sheet_(); const last = sh.getLastRow(); let removed = 0;
     if (last >= 2) {
-      const col = HEADER.indexOf("端末ID") + 1;
+      const col = HEADER.indexOf("受講者名") + 1;
       const vals = sh.getRange(2, col, last - 1, 1).getValues();
-      for (let i = vals.length - 1; i >= 0; i--) { if (String(vals[i][0]) === "test-device") { sh.deleteRow(i + 2); removed++; } }
+      for (let i = vals.length - 1; i >= 0; i--) { if (["接続テスト", "動作確認テスト"].includes(String(vals[i][0]))) { sh.deleteRow(i + 2); removed++; } }
     }
     return json_({ removed });
   }

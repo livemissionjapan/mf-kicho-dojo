@@ -96,7 +96,8 @@ python3 scripts/gen_images.py --from-curriculum --parallel 3 --skip-existing  # 
 ## 公開情報
 
 - GAS ウェブアプリURL：https://script.google.com/macros/s/AKfycbxeHMXOCjEd1-VPHxlM3yyty6kzxCYo2NmnRS3sBOj0piYlnOSu66i6Lpg7Yr9HceaE/exec
-- deploymentId：AKfycbxeHMXOCjEd1-VPHxlM3yyty6kzxCYo2NmnRS3sBOj0piYlnOSu66i6Lpg7Yr9HceaE（@3・2026-10-17 更新。URLは@1から変わっていない）
+- deploymentId：AKfycbxeHMXOCjEd1-VPHxlM3yyty6kzxCYo2NmnRS3sBOj0piYlnOSu66i6Lpg7Yr9HceaE（@5・2026-10-19 v2.1。URLは@1から変わっていない）
 - 初回の権限承認は 2026-10-17 に石島さんが実施済み。未承認だと exec が「アクセス権が必要です」を返す
+- `?action=setup` は列の並びが古い進捗ログを新しい並びへ移し、v1（2026-10-15.x）の行と logId の重複を外す（2026-10-19）
 - 検証用GET：`?action=ping`／`?action=setup`（ダッシュボード作り直し）／`?action=count&deviceId=…`／`?action=cleanup_test`（受講者名「接続テスト」「動作確認テスト」の行だけ削除）
 - clasp のトークンは失効しやすい（`invalid_rapt`）。`clasp push` が失敗したら `clasp login` で再認証

@@ -1,0 +1,9 @@
+{"id": "c1", "ok": true, "model": "gpt-image-2", "seconds": 101.0, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-18T23:29:32"}
+{"id": "s1-1", "ok": true, "model": "gpt-image-2", "seconds": 74.5, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-18T23:31:18"}
+{"id": "s1-2", "ok": true, "model": "gpt-image-2", "seconds": 91.1, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-18T23:31:34"}
+{"id": "s1-3", "ok": true, "model": "gpt-image-2", "seconds": 77.2, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-18T23:32:35"}
+{"id": "c2", "ok": true, "model": "gpt-image-2", "seconds": 71.1, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-18T23:32:45"}
+{"id": "diag", "ok": true, "model": "gpt-image-2", "seconds": 165.4, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-18T23:32:49"}
+{"id": "s2-3", "ok": true, "model": "gpt-image-2", "seconds": 69.3, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-18T23:33:58"}
+{"id": "s2-2", "ok": true, "model": "gpt-image-2", "seconds": 81.1, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-18T23:34:06"}
+{"id": "s2-1", "ok": true, "model": "gpt-image-2", "seconds": 92.1, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-18T23:34:07"}

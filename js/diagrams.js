@@ -1,4 +1,5 @@
-/* 記帳道場 図解モジュール（S1〜S14）
+/* 記帳道場 図解モジュール（S1, S2, S5〜S9, S11, S13, S14）
+ * 対象：簿記の基本は分かる現場の経理担当。文言は一般的な会計の言葉で書く（運用ルールのIDは使わない）
  * 形：window.DIAGRAMS[id] = { title, caption, hint, svg, controls?, init(root) }
  * - 連動：data-link="キー" を持つ要素はアプリ側の共通JSが .lit を付ける（ここでは書かない）
  * - 図固有の状態クラス（.on/.off/.ok/.ng など）は svg 内 <style> で id 限定して定義する
@@ -97,10 +98,10 @@
       b += box(440, y, 260, 44, p.acc, { cls: "acc", attrs: `data-acc="${p.id}"`, fs: 12 });
     });
     b += R(20, 352, 680, 56, { stroke: NG, attrs: 'stroke-dasharray="5 3"' });
-    b += T(120, 370, "AI-OCRの推定は貸方を外しやすい", { fs: 12, fill: NG, w: 700 });
+    b += T(120, 370, "読み取りは貸方を間違えやすい", { fs: 12, fill: NG, w: 700 });
     b += box(230, 358, 60, 24, "現金", { color: NG, stroke: NG, fs: 12, rx: 12 }) + box(300, 358, 70, 24, "買掛金", { color: NG, stroke: NG, fs: 12, rx: 12 });
-    b += T(420, 370, "→ 補正", { fs: 13, fill: NG, w: 700 });
-    b += T(360, 396, "手段をタップすると補正先が出ます", { fs: 12, fill: MU, cls: "note" });
+    b += T(420, 370, "→ 直す", { fs: 13, fill: NG, w: 700 });
+    b += T(360, 396, "手段をタップすると正しい科目が出ます", { fs: 12, fill: MU, cls: "note" });
     const style = `#S2 .pay{cursor:pointer}#S2 .pay.on rect,#S2 .acc.on rect{fill:${LIT};stroke:${A};stroke-width:3}#S2 line.on{stroke:${A};stroke-width:3}`;
     D.S2 = {
       title: "貸方マップ",
@@ -112,97 +113,13 @@
           clearCls(root, "#S2 .on", "on");
           root.querySelectorAll(`#S2 [data-pay="${id}"], #S2 [data-acc="${id}"]`).forEach((el) => el.classList.add("on"));
           const p = pays.find((x) => x.id === id);
-          setText(root, "#S2 .note", `${p.name} → AI-OCRが「${p.ocr}」と推定したら「${p.fix}」に補正`);
+          setText(root, "#S2 .note", `${p.name} → 読み取りが「${p.ocr}」と推定したら「${p.fix}」に直す`);
         };
         root.querySelectorAll("#S2 .pay").forEach((el) => {
           el.addEventListener("click", () => pick(el.dataset.pay));
           el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(el.dataset.pay); } });
         });
       },
-    };
-  })();
-
-  // ---------- S3 自動登録の門 ----------
-  (() => {
-    const cards = [
-      { name: "通信費 5,500", sub: "過去3件・処理は1通り", g: [1, 1, 1, 1], why: "4つの門を全部通った → 自動登録" },
-      { name: "入金 150,000", sub: "A社からの振込", g: [1, 0, 0, 1], why: "② 税込3万円超、③ 入金。入金は全部確認に回す（相手と売掛金の紐付け）" },
-      { name: "PC 180,000", sub: "はじめての購入", g: [0, 0, 1, 0], why: "① 初めて、② 3万円超、④ 10万円以上の物品 → 資産計上の候補として確認（20万未満は一括償却、30万未満は少額特例）" },
-      { name: "初めての店 2,200", sub: "過去0件", g: [0, 1, 1, 1], why: "① 過去に同じ内容がない → ルール化できないので確認（Webで業種を調べる）" },
-    ];
-    const gates = [["① 過去に同じ内容が", "2件以上・処理1通り"], ["② 税込3万円以下"], ["③ 入金ではない"], ["④ 税金・前期日付・", "10万円以上の物品ではない"]];
-    let b = T(360, 18, "明細カードを選ぶ", { fs: 12, fill: MU });
-    cards.forEach((c, i) => (b += box(20 + i * 172, 30, 160, 54, [c.name, c.sub], { cls: "card", attrs: `data-card="${i}" tabindex="0"`, fs: 12 })));
-    gates.forEach((g, i) => {
-      const x = 20 + i * 172;
-      b += box(x, 130, 160, 90, g, { cls: "gate", attrs: `data-gate="${i}"`, fs: 11 });
-      b += T(x + 80, 236, "", { fs: 12, fill: NG, w: 700, attrs: `data-stop="${i}"` });
-      if (i < 3) b += arrow("S3", x + 160, 175, x + 170, 175);
-    });
-    b += arrow("S3", 616, 222, 616, 258) + T(628, 240, "通れば", { fs: 11, fill: MU, anchor: "start" });
-    b += box(540, 262, 160, 44, "自動登録", { cls: "res", attrs: 'data-res="auto"', w: 700, stroke: OK, color: OK });
-    b += box(20, 262, 200, 44, "確認に回す（Slack）", { cls: "res", attrs: 'data-res="check"', w: 700, stroke: WN, color: WN });
-    b += T(260, 284, "← どこかで止まれば", { fs: 11, fill: MU, anchor: "start" });
-    b += `<foreignObject x="20" y="320" width="680" height="70"><div xmlns="http://www.w3.org/1999/xhtml" style="font-size:13px;line-height:1.5;color:${INK}" data-why>カードを選ぶと、止まった門と理由が出ます</div></foreignObject>`;
-    const style = `#S3 .card{cursor:pointer}#S3 .card.on rect{fill:${LIT};stroke:${A};stroke-width:3}#S3 .gate.ok rect{stroke:${OK};stroke-width:3}` +
-      `#S3 .gate.ng rect{stroke:${NG};stroke-width:3}#S3 .gate.ng text{fill:${NG}}#S3 .res.on rect{fill:${LIT};stroke-width:3}`;
-    D.S3 = {
-      title: "自動登録の門",
-      caption: "4つの門を全部通った明細だけ自動登録。どこかで止まれば確認に回す（C2・C3）。",
-      hint: "明細カードをタップすると、止まった門が赤く光り、理由が出ます",
-      svg: svg("S3", 400, "自動登録の4つの門を明細カードが通る図", b, style),
-      init(root) {
-        const pick = (i) => {
-          const c = cards[i];
-          clearCls(root, "#S3 .on, #S3 .ok, #S3 .ng", "on", "ok", "ng");
-          root.querySelector(`#S3 [data-card="${i}"]`).classList.add("on");
-          root.querySelectorAll("#S3 [data-stop]").forEach((t) => (t.textContent = ""));
-          let stopped = false;
-          c.g.forEach((pass, j) => {
-            const g = root.querySelector(`#S3 [data-gate="${j}"]`);
-            if (pass) { if (!stopped) g.classList.add("ok"); }
-            else { g.classList.add("ng"); if (!stopped) { root.querySelector(`#S3 [data-stop="${j}"]`).textContent = "ここで止まる"; stopped = true; } }
-          });
-          root.querySelector(`#S3 [data-res="${stopped ? "check" : "auto"}"]`).classList.add("on");
-          setText(root, "#S3 [data-why]", c.why);
-        };
-        root.querySelectorAll("#S3 .card").forEach((el) => {
-          el.addEventListener("click", () => pick(+el.dataset.card));
-          el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(+el.dataset.card); } });
-        });
-      },
-    };
-  })();
-
-  // ---------- S4 判定4区分フロー ----------
-  (() => {
-    const note = (x, y, lines) => lines.map((s, i) => T(x, y + i * 16, s, { fs: 12, fill: MU, anchor: "start" })).join("");
-    let b = box(20, 16, 200, 44, "「見つけ方」で拾った", { link: "s4-start", w: 700 });
-    b += arrow("S4", 120, 60, 120, 86);
-    b += box(20, 88, 200, 56, "問題ない例外に当たる？", { link: "s4-q1", fill: LIT });
-    b += arrow("S4", 220, 116, 298, 116) + T(258, 104, "はい", { fs: 12, fill: OK });
-    b += box(300, 88, 170, 56, "確認済み", { link: "s4-ok", stroke: OK, color: OK, w: 700 });
-    b += note(486, 104, ["例：E3 法定福利費のマイナス", "（給与方式の途中経過）"]);
-    b += arrow("S4", 120, 144, 120, 172) + T(150, 158, "いいえ", { fs: 12, fill: NG, anchor: "start" });
-    b += box(20, 174, 200, 56, "裏付けの資料はある？", { link: "s4-q2", fill: LIT });
-    b += arrow("S4", 220, 202, 298, 202) + T(258, 190, "ない", { fs: 12, fill: WN });
-    b += box(300, 174, 170, 56, "資料不足", { link: "s4-lack", stroke: WN, color: WN, w: 700 });
-    b += note(486, 190, ["例：C4 登録番号を請求書で", "確かめられない → 依頼する"]);
-    b += arrow("S4", 120, 230, 120, 258) + T(150, 244, "ある", { fs: 12, fill: OK, anchor: "start" });
-    b += box(20, 260, 200, 56, ["課税方式・時期で", "このチェックの対象？"], { link: "s4-q3", fill: LIT, fs: 12 });
-    b += arrow("S4", 220, 288, 298, 288) + T(258, 276, "いいえ", { fs: 12, fill: MU });
-    b += box(300, 260, 170, 56, "対象外", { link: "s4-na", stroke: MU, color: MU, w: 700 });
-    b += note(486, 276, ["例：C4は原則課税だけ。", "免税・簡易は対象外"]);
-    b += arrow("S4", 120, 316, 120, 344) + T(150, 330, "はい", { fs: 12, fill: OK, anchor: "start" });
-    b += box(20, 346, 200, 56, "要確認", { link: "s4-check", stroke: NG, color: NG, w: 700 });
-    b += note(240, 362, ["例：D10 費用に10万円以上の購入 → 資産にするか確認を依頼", "例：D3 入金が売上で二重に立っている → 修正を依頼"]);
-    b += T(360, 422, "順番は固定：例外 → 資料 → 対象 → 要確認。先に「要確認」と決めない", { fs: 13, w: 700 });
-    D.S4 = {
-      title: "判定4区分フロー",
-      caption: "拾ったものは「確認済み／資料不足／対象外／要確認」のどれか1つに落とす。順番は例外→資料→対象の順。",
-      hint: "各ノードをタップすると、同じ区分の要素が光ります",
-      svg: svg("S4", 440, "拾った項目を4区分に振り分ける判定フロー", b),
-      init() {},
     };
   })();
 
@@ -260,8 +177,8 @@
     b += T(585, 34, "法定福利費の残高", { w: 700 }) + `<line x1="500" y1="${base}" x2="670" y2="${base}" stroke="${MU}"/>`;
     b += T(500, base - 8, "＋", { fs: 11, fill: MU }) + T(500, base + 10, "−", { fs: 11, fill: MU });
     b += `<rect x="555" y="${base}" width="60" height="0" fill="${NG}" data-bar="lf"/>` + T(585, 262, "0", { fs: 16, w: 700, attrs: 'data-val="lf"' }) + T(585, 284, "", { fs: 12, fill: MU, attrs: 'data-sub="lf"' });
-    b += R(15, 312, 690, 60, { stroke: OK, attrs: 'stroke-dasharray="5 3"' }) + T(360, 332, "このマイナスは問題ない例外（E3）", { fs: 13, fill: OK, w: 700 });
-    b += T(360, 354, "引落で会社負担分だけが残る途中経過。「マイナスだ」と拾わず、引落後の残高で見る", { fs: 12 });
+    b += R(15, 312, 690, 60, { stroke: OK, attrs: 'stroke-dasharray="5 3"' }) + T(360, 332, "このマイナスは異常ではない（給与の仕組み上そうなる）", { fs: 13, fill: OK, w: 700 });
+    b += T(360, 354, "引落で会社負担分だけが残る途中経過。「マイナスだ」と慌てず、引落後の残高で見る", { fs: 12 });
     const style = `#S6 .je{opacity:.45}#S6 .je.on{opacity:1}#S6 .je.on rect{stroke:${A};stroke-width:3}`;
     D.S6 = {
       title: "給与仕訳の形",
@@ -310,7 +227,7 @@
           setText(root, '#S7 [data-text="sale"]', ng ? "200,000（二重）" : "100,000");
           setText(root, '#S7 [data-text="ar"]', ng ? "100,000（残ったまま）" : "0");
           root.querySelectorAll("#S7 [data-res]").forEach((el) => el.classList.add(ng ? "ng" : "ok"));
-          setText(root, '#S7 [data-text="memo"]', ng ? "× 売上が二重（D3）。売掛金も消えないので、次の月も残高が増え続ける。入金は「売掛金の回収」で消し込む" : "◯ 売上は請求時の1回だけ。入金で売掛金が0になり、3点が合う");
+          setText(root, '#S7 [data-text="memo"]', ng ? "× 売上が二重に立つ。売掛金も消えないので、次の月も残高が増え続ける。入金は「売掛金の回収」で消し込む" : "◯ 売上は請求時の1回だけ。入金で売掛金が0になり、3点が合う");
         };
         root.querySelectorAll("[data-on]").forEach((bt) => bt.addEventListener("click", () => show(bt.dataset.on)));
         show("ar");
@@ -331,7 +248,7 @@
     b += T(X0 + 36 * PX, 188, "2026-10-01〜", { fs: 11, fill: WN }) + T(X0 + 60 * PX, 188, "2028-10-01〜", { fs: 11, fill: NG });
     b += `<line x1="${X0}" y1="36" x2="${X0}" y2="158" stroke="${A}" stroke-width="3" data-marker/>`;
     b += R(20, 206, 680, 100, { stroke: A }) + T(360, 230, "", { fs: 14, attrs: 'data-text="date"' }) + T(360, 258, "", { fs: 20, w: 700, attrs: 'data-text="rate"' }) + T(360, 288, "", { fs: 12, fill: MU, attrs: 'data-text="book"' });
-    b += T(360, 326, "C4：登録番号の有無と取引日に控除区分が合っているか（原則課税だけ・全件）", { fs: 12 });
+    b += T(360, 326, "登録番号があるか、取引日はいつかで控除できる割合が決まる", { fs: 12 });
     D.S8 = {
       title: "インボイス控除区分の時系列",
       caption: "登録番号があれば100%。なければ取引日で80%→70%→控除なしと変わる。区分は取引日で決まり、処理日ではない。",
@@ -359,17 +276,17 @@
   (() => {
     const cols = ["対象外", "課税10%", "課税8%"];
     const rows = [
-      ["BS｜預金", ["◯", "C1：BS科目は対象外が基本"], ["×", "C1：BS科目に課税が付いていたら拾う"], ["×", "C1：BS科目に課税が付いていたら拾う"]],
-      ["BS｜売掛金", ["◯", "C1：BS科目は対象外が基本"], ["×", "C1：BS科目に課税が付いていたら拾う"], ["×", "C1：BS科目に課税が付いていたら拾う"]],
-      ["BS｜固定資産の取得", ["△", "C1：土地などは対象外、建物・機械は課税。中身で判断"], ["◯", "C1の例外：固定資産の購入は課税仕入れが正しい"], ["×", "C3：固定資産に8%は拾う"]],
-      ["対象外科目｜租税公課", ["◯", "C2：対象外が正しい"], ["×", "C2：課税が付いていたら拾う"], ["×", "C2：課税が付いていたら拾う"]],
-      ["対象外科目｜減価償却費", ["◯", "C2：対象外が正しい"], ["×", "C2：課税が付いていたら拾う"], ["×", "C2：課税が付いていたら拾う"]],
-      ["対象外科目｜棚卸高", ["◯", "C2：対象外が正しい"], ["×", "C2：課税が付いていたら拾う"], ["×", "C2：課税が付いていたら拾う"]],
-      ["費用｜通信費", ["△", "C2：国際通信など対象外のことがある。中身で判断"], ["◯", "通常は課税10%"], ["×", "C3：飲食料品以外の8%は拾う"]],
-      ["費用｜広告宣伝費", ["△", "C2：海外向けは対象外のことがある。中身で判断"], ["◯", "通常は課税10%"], ["×", "C3：飲食料品以外の8%は拾う"]],
-      ["費用｜会議費", ["△", "C2：中身で判断"], ["◯", "外食・会場費は10%"], ["△", "C3：持ち帰りの弁当・飲み物は8%、外食は10%"]],
-      ["飲食料品の仕入", ["×", "C2：仕入は課税"], ["△", "C3：酒・外食は10%"], ["◯", "C3：飲食料品（酒・外食を除く）は8%が正しい"]],
-      ["新聞（定期購読）", ["×", "C2：課税"], ["△", "C3：電子版は10%"], ["◯", "C3：定期購読の新聞は8%が正しい"]],
+      ["BS｜預金", ["◯", "預金や売掛金などBS科目には消費税の区分を付けない"], ["×", "預金の増減に消費税は関係ない。課税は誤り"], ["×", "預金の増減に消費税は関係ない。8%も誤り"]],
+      ["BS｜売掛金", ["◯", "売掛金の発生・回収には区分を付けない"], ["×", "税区分は売上側に付く。売掛金に課税は誤り"], ["×", "税区分は売上側に付く。売掛金に8%は誤り"]],
+      ["BS｜固定資産の取得", ["△", "土地は非課税、建物・機械・車は課税。中身で判断"], ["◯", "建物・機械・車などの購入は課税仕入れが正しい"], ["×", "固定資産に8%はない（飲食料品ではない）"]],
+      ["対象外｜租税公課", ["◯", "税金の支払いに消費税はかからない"], ["×", "税金の支払いに課税を付けるのは誤り"], ["×", "税金の支払いに8%を付けるのは誤り"]],
+      ["対象外｜減価償却費", ["◯", "減価償却は帳簿上の配分。消費税は購入時に済んでいる"], ["×", "減価償却費に課税を付けるのは誤り"], ["×", "減価償却費に8%を付けるのは誤り"]],
+      ["対象外｜棚卸高", ["◯", "棚卸高は在庫の振替。消費税は仕入時に済んでいる"], ["×", "棚卸高に課税を付けるのは誤り"], ["×", "棚卸高に8%を付けるのは誤り"]],
+      ["費用｜通信費", ["△", "国際通話など不課税のことがある。中身で判断"], ["◯", "通常は課税10%"], ["×", "通信費に8%はない（飲食料品ではない）"]],
+      ["費用｜広告宣伝費", ["△", "海外向けの広告は不課税のことがある。中身で判断"], ["◯", "通常は課税10%"], ["×", "広告費に8%はない（飲食料品ではない）"]],
+      ["費用｜会議費", ["△", "中身で判断"], ["◯", "外食・会場費は10%"], ["△", "持ち帰りの弁当・飲み物は8%、外食は10%"]],
+      ["飲食料品の仕入", ["×", "仕入は課税。対象外は誤り"], ["△", "酒・外食は10%"], ["◯", "飲食料品（酒・外食を除く）は8%が正しい"]],
+      ["新聞（定期購読）", ["×", "新聞の購読料は課税。対象外は誤り"], ["△", "電子版・駅売りは10%"], ["◯", "週2回以上発行の定期購読の新聞は8%が正しい"]],
     ];
     const col = { "◯": OK, "×": NG, "△": WN };
     const CX = [206, 376, 546], CW = 164, RH = 27, Y0 = 44;
@@ -382,13 +299,13 @@
         b += `<g class="cell" data-row="${i}" data-col="${j}" data-link="${k}" data-note="${note}" tabindex="0"><title>${note}</title>${R(CX[j], y, CW, RH - 3, { rx: 5 })}${T(CX[j] + CW / 2, y + RH / 2 - 1, m, { fs: 14, w: 700, fill: col[m] })}</g>`;
       });
     });
-    b += T(360, 362, "◯＝正しい　×＝拾う　△＝中身で判断", { fs: 12, fill: MU });
-    b += T(360, 386, "セルをタップすると根拠（C1/C2/C3）が出ます", { fs: 13, attrs: "data-note-out" });
+    b += T(360, 362, "◯＝正しい　×＝誤り　△＝中身で判断", { fs: 12, fill: MU });
+    b += T(360, 386, "セルをタップすると理由が出ます", { fs: 13, attrs: "data-note-out" });
     const style = `#S9 .cell{cursor:pointer}#S9 .hl rect{stroke:${A};stroke-width:2.5;fill:${LIT}}#S9 .cell.hl rect{fill:${LIT}}`;
     D.S9 = {
       title: "税区分マトリクス",
-      caption: "科目グループで税区分の正解はほぼ決まる。BS科目と対象外科目に課税は×、8%は飲食料品と新聞だけ◯。",
-      hint: "セルをタップすると同じ行が光り、根拠のルール（C1/C2/C3）が出ます",
+      caption: "税区分は科目でほぼ決まる。預金・売掛金や税金・減価償却・棚卸には区分なし。8%は飲食料品と定期購読の新聞だけ。",
+      hint: "セルをタップすると同じ行が光り、理由が出ます",
       svg: svg("S9", 400, "科目グループと税区分の正誤マトリクス", b, style),
       init(root) {
         const show = (el) => {
@@ -406,41 +323,6 @@
     };
   })();
 
-  // ---------- S10 課税方式スイッチ ----------
-  (() => {
-    const modes = { exempt: { name: "免税", on: [], note: "免税：消費税のチェック（C1〜C5）は全部対象外。税区分は見なくてよい" },
-      simple: { name: "簡易課税", on: ["C1", "C2", "C3", "C5"], note: "簡易課税：売上の「種」が業種と合っているか（C5）。仕入の控除区分（C4）は見ない" },
-      general: { name: "原則課税", on: ["C1", "C2", "C3", "C4"], note: "原則課税：仕入の「控除区分」を全件（C4）。種（C5）は使わない" } };
-    const cards = [["C1", "BS科目に", "課税なし"], ["C2", "対象外科目は", "対象外"], ["C3", "8%は飲食料品", "と新聞だけ"], ["C4", "控除区分", "（登録番号・経過措置）"], ["C5", "簡易の「種」", "が業種と合う"]];
-    let b = "";
-    Object.entries(modes).forEach(([k, m], i) => (b += box(40 + i * 220, 16, 200, 44, m.name, { cls: "mode", attrs: `data-mode="${k}" tabindex="0"`, w: 700 })));
-    cards.forEach((c, i) => (b += box(20 + i * 138, 90, 128, 110, [c[0], "", c[1], c[2]], { cls: "card", attrs: `data-card="${c[0]}"`, fs: 12 })));
-    b += T(360, 230, "", { fs: 13, attrs: "data-note" });
-    b += T(360, 262, "簡易 → 売上の「種」（第一種〜第六種）を見る／原則 → 仕入の「控除区分」を見る", { fs: 12, fill: MU });
-    b += T(360, 290, "どの方式かは会社ごとに決まっている。最初に確かめてからチェックに入る", { fs: 12, fill: MU });
-    const style = `#S10 .mode{cursor:pointer}#S10 .mode.on rect{fill:${A};stroke:${A}}#S10 .mode.on text{fill:${BG}}` +
-      `#S10 .card.off rect{stroke:${MU};stroke-dasharray:4 3;fill-opacity:.4}#S10 .card.off text{fill:${MU}}#S10 .card.on rect{fill:${LIT};stroke:${A};stroke-width:3}`;
-    D.S10 = {
-      title: "課税方式スイッチ",
-      caption: "会社の課税方式で、見るルールが変わる。免税は全部消灯、簡易はC5、原則はC4が点く。",
-      hint: "免税／簡易／原則を切り替えると、点灯するルールカードが変わります",
-      svg: svg("S10", 310, "課税方式ごとに点灯する消費税ルールカード", b, style),
-      init(root) {
-        const show = (k) => {
-          const m = modes[k];
-          root.querySelectorAll("#S10 .mode").forEach((el) => el.classList.toggle("on", el.dataset.mode === k));
-          root.querySelectorAll("#S10 .card").forEach((el) => { const on = m.on.includes(el.dataset.card); el.classList.toggle("on", on); el.classList.toggle("off", !on); });
-          setText(root, "#S10 [data-note]", m.note);
-        };
-        root.querySelectorAll("#S10 .mode").forEach((el) => {
-          el.addEventListener("click", () => show(el.dataset.mode));
-          el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); show(el.dataset.mode); } });
-        });
-        show("general");
-      },
-    };
-  })();
-
   // ---------- S11 資金移動の補助科目 ----------
   (() => {
     let b = box(20, 50, 180, 60, ["A口座", "普通預金〝A〟"], { link: "s11-a" }) + arrow("S11", 200, 80, 268, 80);
@@ -449,19 +331,19 @@
     b += `<g class="je" data-je="out">${R(20, 160, 680, 34, {})}${T(30, 177, "出金側：資金移動 100,000 ／ 普通預金〝A〟 100,000", { fs: 13, anchor: "start" })}${T(690, 177, "", { fs: 12, fill: MU, anchor: "end", attrs: 'data-text="d1"' })}</g>`;
     b += `<g class="je" data-je="in">${R(20, 204, 680, 34, {})}${T(30, 221, "入金側：普通預金〝B〟 100,000 ／ 資金移動 100,000", { fs: 13, anchor: "start" })}${T(690, 221, "", { fs: 12, fill: MU, anchor: "end", attrs: 'data-text="d2"' })}</g>`;
     b += `<g data-res>${R(20, 258, 680, 44, {})}${T(360, 280, "", { fs: 13, w: 700, attrs: 'data-text="res"' })}</g>`;
-    b += T(360, 322, "B4：口座間の振替は両側が〝資金移動〟を通り、月末に残高が0に戻るかを見る", { fs: 12, fill: MU });
+    b += T(360, 322, "口座間の振替は両側が〝資金移動〟を通り、月末に残高が0に戻るのが正しい形", { fs: 12, fill: MU });
     const style = `#S11 .je{opacity:.3}#S11 .je.on{opacity:1}#S11 .ng rect{stroke:${NG};stroke-width:3}#S11 .ng text{fill:${NG}}#S11 .ok rect{stroke:${OK};stroke-width:3}#S11 .ok text{fill:${OK}}`;
     D.S11 = {
       title: "資金移動の補助科目",
       caption: "自社口座間の振替は普通預金〝資金移動〟を通す。両側を登録すると残高は0に戻る。片側だけだと残る。",
-      hint: "ボタンで出金側だけ／両側／月またぎを切り替えると、残高と判定が変わります",
+      hint: "ボタンで出金側だけ／両側／月またぎを切り替えると、残高と結果が変わります",
       svg: svg("S11", 340, "口座間の資金移動と補助科目の残高", b, style),
       controls: `<div class="d-controls"><button type="button" class="d-btn" data-on="out">出金側を登録</button><button type="button" class="d-btn" data-on="both">入金側も登録</button><button type="button" class="d-btn" data-on="cross">月またぎにする</button></div>`,
       init(root) {
         const st = {
-          out: { d1: "3/15", d2: "", bal: 100000, cls: "ng", res: "× 月末に 100,000 が残る → 入金側の登録漏れ（拾う）" },
+          out: { d1: "3/15", d2: "", bal: 100000, cls: "ng", res: "× 月末に 100,000 が残る → 入金側の登録漏れ" },
           both: { d1: "3/15", d2: "3/15", bal: 0, cls: "ok", res: "◯ 両側を通って 0 に戻った" },
-          cross: { d1: "3/31", d2: "4/1", bal: 100000, cls: "ok", res: "◯ 3月末は 100,000 残るが 4/1 に解消 → B4の例外（問題ない）" },
+          cross: { d1: "3/31", d2: "4/1", bal: 100000, cls: "ok", res: "◯ 月末に出して翌月初に入る振替。4/1 に解消するので問題ない" },
         };
         const show = (k) => {
           const s = st[k];
@@ -479,55 +361,6 @@
     };
   })();
 
-  // ---------- S12 自動仕訳の入口5つ ----------
-  (() => {
-    const routes = [["link", "連携明細（銀行・カード）"], ["inv", "請求書から入力"], ["pay", "給与から入力"], ["exp", "経費・債務支払から入力"], ["ocr", "AI-OCRから入力"]];
-    // 試算表の科目と、当月を作る経路・金額
-    const accs = [{ n: "売上高", src: { inv: 1500000 }, prev: [1400000, 1450000] }, { n: "給料手当", src: { pay: 600000 }, prev: [600000, 600000] },
-      { n: "外注費", src: { exp: 400000 }, prev: [380000, 420000] }, { n: "消耗品費", src: { link: 30000, ocr: 15000 }, prev: [42000, 48000] }];
-    let b = "";
-    routes.forEach(([k, n], i) => {
-      const y = 30 + i * 62;
-      b += box(20, y, 200, 44, n, { cls: "route", attrs: `data-route="${k}" tabindex="0"`, fs: 12 });
-      b += `<line x1="220" y1="${y + 22}" x2="298" y2="170" stroke="${MU}" stroke-width="1.5" data-line="${k}"/>`;
-    });
-    b += box(300, 130, 120, 80, ["仕訳帳", "（合流）"], { stroke: A, w: 700 }) + arrow("S12", 420, 170, 448, 170);
-    b += R(450, 16, 260, 330, {}) + T(580, 36, "試算表（当月）と月次推移", { w: 700 });
-    accs.forEach((a, i) => {
-      const y = 60 + i * 70;
-      b += T(462, y + 10, a.n, { fs: 12, anchor: "start" }) + T(700, y + 10, "", { fs: 12, anchor: "end", w: 700, attrs: `data-amt="${i}"` });
-      [0, 1, 2].forEach((m) => (b += `<rect x="${600 + m * 30}" y="${y + 58}" width="20" height="0" fill="${m === 2 ? A : MU}" data-bar="${i}-${m}"/>`));
-      b += T(462, y + 36, "前々月・前月・当月", { fs: 10, fill: MU, anchor: "start" });
-    });
-    b += T(360, 358, "経路をOFFにすると試算表の科目が0になり、推移に穴が開く", { fs: 12, fill: MU });
-    const style = `#S12 .route{cursor:pointer}#S12 .route.off rect{stroke:${MU};stroke-dasharray:4 3;fill-opacity:.4}#S12 .route.off text{fill:${MU}}#S12 line.off{stroke-dasharray:3 4;opacity:.4}` +
-      `#S12 .route.on rect{stroke:${OK};stroke-width:2.5}`;
-    D.S12 = {
-      title: "自動仕訳の入口5つ",
-      caption: "仕訳は5つの入口から仕訳帳に合流して試算表になる。どれかが止まると、その科目が0になり月次推移に穴が開く。",
-      hint: "経路をタップしてON/OFFすると、試算表の数字と推移バーが変わります",
-      svg: svg("S12", 370, "5つの自動仕訳の入口が仕訳帳に合流し試算表になる図", b, style),
-      init(root) {
-        const on = Object.fromEntries(routes.map(([k]) => [k, true]));
-        const render = () => {
-          root.querySelectorAll("#S12 .route").forEach((el) => { el.classList.toggle("on", on[el.dataset.route]); el.classList.toggle("off", !on[el.dataset.route]); });
-          root.querySelectorAll("#S12 [data-line]").forEach((el) => el.classList.toggle("off", !on[el.dataset.line]));
-          accs.forEach((a, i) => {
-            const cur = Object.entries(a.src).reduce((s, [k, v]) => s + (on[k] ? v : 0), 0);
-            const vals = [...a.prev, cur], max = Math.max(...a.prev, cur, 1);
-            const amt = root.querySelector(`#S12 [data-amt="${i}"]`); amt.textContent = yen(cur); amt.setAttribute("fill", cur ? INK : NG);
-            vals.forEach((v, m) => { const r = root.querySelector(`#S12 [data-bar="${i}-${m}"]`); const h = (v / max) * 40; r.setAttribute("height", h); r.setAttribute("y", 60 + i * 70 + 58 - h); r.setAttribute("fill", m === 2 ? (cur ? A : NG) : MU); });
-          });
-        };
-        root.querySelectorAll("#S12 .route").forEach((el) => {
-          const tg = () => { on[el.dataset.route] = !on[el.dataset.route]; render(); };
-          el.addEventListener("click", tg); el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tg(); } });
-        });
-        render();
-      },
-    };
-  })();
-
   // ---------- S13 推移表ヒートマップ ----------
   (() => {
     const months = ["4月", "5月", "6月", "7月", "8月", "9月", "10月（当月）"];
@@ -536,12 +369,12 @@
     // 当月の判定（単位：千円）
     const judge = (v) => {
       const prev = v.slice(0, 6), cur = v[6], avg = prev.reduce((a, c) => a + c, 0) / 6;
-      if (cur < 0) return { c: NG, why: "E3：マイナス残高。費用がマイナスなら、戻入・科目の逆・紐付け誤りを疑う" };
-      if (cur === 0 && prev.every((p) => p > 0)) return { c: NG, why: "D2：毎月あった費用が当月0。計上漏れ・引落明細の未登録を疑う（年払い・解約済みなら例外）" };
-      if (cur <= 20 && avg <= 20) return { c: MU, why: "D1の対象外：当月も6ヶ月平均も2万円以下は見ない（灰色）" };
+      if (cur < 0) return { c: NG, why: "マイナス残高（本来と逆向き）。費用がマイナスなら、戻入・科目の逆・入金との紐付け誤りを疑う" };
+      if (cur === 0 && prev.every((p) => p > 0)) return { c: NG, why: "毎月あった費用が今月だけない。計上漏れ・引落明細の未登録かも（年払い・解約済みなら問題ない）" };
+      if (cur <= 20 && avg <= 20) return { c: MU, why: "少額（2万円以下）は見ない。当月もここ半年の平均も2万円以下（灰色）" };
       const d = Math.round(((cur - avg) / avg) * 100);
-      if (Math.abs(d) > 50) return { c: WN, why: `D1：6ヶ月平均 ${yen(Math.round(avg))} 千円に対して ${d > 0 ? "+" : ""}${d}%。±50%を超えたので拾う（大型案件・季節変動なら例外）` };
-      return { c: null, why: `問題なし：6ヶ月平均 ${yen(Math.round(avg))} 千円に対して ${d > 0 ? "+" : ""}${d}%（±50%以内）` };
+      if (Math.abs(d) > 50) return { c: WN, why: `ここ半年の平均 ${yen(Math.round(avg))} 千円と比べて ${d > 0 ? "+" : ""}${d}%。大きく動いている。理由が説明できるか（大型案件・季節変動なら問題ない）` };
+      return { c: null, why: `問題なし：ここ半年の平均 ${yen(Math.round(avg))} 千円と比べて ${d > 0 ? "+" : ""}${d}%（±50%以内）` };
     };
     const LX = 10, LW = 120, CW = 82, RH = 36, Y0 = 44;
     let b = T(LX, 24, "単位：千円", { fs: 11, fill: MU, anchor: "start" });
@@ -554,13 +387,13 @@
         b += `<g class="cell" data-row="${i}" tabindex="0">${R(LX + LW + j * CW, y, CW - 4, RH - 4, { fill, rx: 5, attrs: cur && j7.c ? 'fill-opacity=".35"' : "" })}${T(LX + LW + j * CW + CW / 2, y + RH / 2 - 2, yen(x), { fs: 12, fill: x < 0 ? NG : INK, w: cur ? 700 : 400 })}</g>`;
       });
     });
-    b += T(360, 274, "橙＝平均±50%外れ（D1）　赤＝毎月あった費用が0（D2）／マイナス残高（E3）　灰＝2万円以下は対象外", { fs: 11, fill: MU });
+    b += T(360, 274, "橙＝ここ半年の平均から±50%外れ　赤＝毎月あった費用が0／マイナス残高　灰＝少額（2万円以下）は見ない", { fs: 11, fill: MU });
     b += `<foreignObject x="10" y="290" width="700" height="60"><div xmlns="http://www.w3.org/1999/xhtml" style="font-size:13px;line-height:1.5;color:${INK}" data-why>セルをタップすると、なぜ色が付いたかが出ます</div></foreignObject>`;
     const style = `#S13 .cell{cursor:pointer}#S13 .cell.on rect{stroke:${A};stroke-width:2.5}`;
     D.S13 = {
       title: "推移表ヒートマップ",
-      caption: "月次推移は当月を直前6ヶ月の平均と比べる。±50%外れは橙、毎月あった費用の0とマイナスは赤、2万円以下は見ない。",
-      hint: "セルをタップすると、その行に色が付いた理由（D1/D2/E3）が出ます",
+      caption: "月次推移は当月をここ半年の平均と比べる。±50%外れは橙、毎月あった費用の0とマイナスは赤、少額（2万円以下）は見ない。",
+      hint: "セルをタップすると、その行に色が付いた理由が出ます",
       svg: svg("S13", 350, "科目別月次推移のヒートマップ", b, style),
       init(root) {
         const show = (i) => {
@@ -580,8 +413,8 @@
   (() => {
     const months = ["2月", "3月", "4月", "5月"];
     const cards = [
-      { name: "3月分の外注費", sub: "請求書は4月に到着", ans: 2, ok: "◯ 役務を受けた3月の費用（未払金で計上）", ng: "× 請求書の到着月ではなく、役務を受けた月に計上する（F1）" },
-      { name: "4月分の家賃", sub: "3月に前払い", ans: 3, ok: "◯ 4月分なので翌期の費用。3月の支払時は前払費用", ng: "× 支払った月ではなく、対象の月に計上する（F1）" },
+      { name: "3月分の外注費", sub: "請求書は4月に到着", ans: 2, ok: "◯ 役務を受けた3月の費用（未払金で計上）", ng: "× 請求書の到着月ではなく、役務を受けた月に計上する" },
+      { name: "4月分の家賃", sub: "3月に前払い", ans: 3, ok: "◯ 4月分なので翌期の費用。3月の支払時は前払費用", ng: "× 支払った月ではなく、対象の月に計上する" },
     ];
     let b = "";
     months.forEach((m, j) => (b += R(40 + j * 160, 30, 156, 44, { fill: j < 2 ? LIT : BG, rx: 6 }) + T(118 + j * 160, 52, m, { fs: 13, w: 700 })));
@@ -601,15 +434,15 @@
     [[100000, "10万"], [200000, "20万"], [300000, "30万"]].forEach(([v, s]) => (b += `<line x1="${vx(v)}" y1="340" x2="${vx(v)}" y2="360" stroke="${INK}" stroke-width="2"/>` + T(vx(v), 374, s, { fs: 11, fill: MU })));
     [[75000, "費用"], [150000, "一括償却"], [250000, "少額特例"], [325000, "資産"]].forEach(([v, s]) => (b += T(vx(v), 332, s, { fs: 11, fill: MU })));
     b += `<path d="M-7 -12 L7 -12 L0 0 Z" fill="${A}" transform="translate(${vx(180000)},350)" data-marker/>`;
-    b += T(360, 400, "", { fs: 14, w: 700, attrs: 'data-text="asset"' }) + T(360, 424, "費用に10万円以上の購入が入っていたら拾う（D10）。20万未満＝一括償却資産、30万未満＝少額特例（青色・年300万円まで）", { fs: 11, fill: MU });
+    b += T(360, 400, "", { fs: 14, w: 700, attrs: 'data-text="asset"' }) + T(360, 424, "1点10万円以上は費用ではなく資産。20万未満＝一括償却資産、30万未満＝少額特例（青色・年300万円まで）", { fs: 11, fill: MU });
     const style = `#S14 .mb{cursor:pointer}#S14 .mb.ok rect{stroke:${OK};stroke-width:3;fill:${LIT}}#S14 .mb.ng rect{stroke:${NG};stroke-width:3}#S14 .mb.ng text{fill:${NG}}`;
     const judgeAsset = (v) => (v < 100000 ? ["費用（消耗品費など）：10万円未満", OK] : v < 200000 ? ["一括償却資産：10万円以上20万円未満（3年で均等償却）", WN]
       : v < 300000 ? ["少額減価償却資産の特例：30万円未満（青色申告・年300万円まで）", WN] : ["固定資産：資産計上して固定資産台帳へ（減価償却）", NG]);
     D.S14 = {
       title: "決算前タイムライン",
       caption: "期末前後は「いつ払ったか」ではなく「いつの分か」で月を決める。固定資産は金額の線で扱いが変わる。",
-      hint: "各カードの「置く月」を選ぶと正誤が出ます。スライダーで固定資産の判定が変わります",
-      svg: svg("S14", 440, "期末前後の計上月と固定資産の金額判定", b, style),
+      hint: "各カードの「置く月」を選ぶと正誤が出ます。スライダーで固定資産の扱いが変わります",
+      svg: svg("S14", 440, "期末前後の計上月と固定資産の金額の線", b, style),
       controls: `<div class="d-controls"><label for="s14-range">取得価額</label><input id="s14-range" type="range" min="${vmin}" max="${vmax}" step="10000" value="180000" aria-label="取得価額"><span class="d-note" data-role="amt"></span></div>`,
       init(root) {
         root.querySelectorAll("#S14 .mb").forEach((el) => {

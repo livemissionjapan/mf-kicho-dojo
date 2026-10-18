@@ -162,3 +162,35 @@ table.sum td.num{text-align:right}
 @keyframes fall{to{transform:translateY(110vh) rotate(540deg);opacity:0}}
 footer{font-size:12px;color:var(--muted);text-align:center;margin-top:30px}
 @media (max-width:420px){ .two{grid-template-columns:1fr} .hero{flex-direction:column;align-items:flex-start} .tform{grid-template-columns:1fr} }
+/* ---------- v2: 画像・診断マップ・むずかしかった ---------- */
+.pic{display:block;max-width:100%;border-radius:12px;background:var(--line)}
+.pic.cover{width:100%;aspect-ratio:3/2;object-fit:cover;margin:0 0 10px}
+.pic.scene{width:100%;max-height:300px;object-fit:cover;margin:0 0 10px}
+.pic.thumb{width:84px;height:56px;object-fit:cover;flex:none;border-radius:8px}
+.world{grid-template-columns:auto 44px 1fr}
+.world .pic.thumb{grid-row:span 1}
+.stage .pic.thumb{width:72px;height:48px}
+.ch-head{display:grid;grid-template-columns:1fr;gap:12px}
+.ch-head .pic.cover{margin:0}
+@media (min-width:600px){ .ch-head{grid-template-columns:280px 1fr} }
+.lbl{display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:4px}
+.diag-hero{display:grid;gap:14px}
+@media (min-width:600px){ .diag-hero{grid-template-columns:260px 1fr;align-items:center} }
+.fieldbars{display:grid;gap:6px;margin:10px 0}
+.fb-row{display:grid;grid-template-columns:7.5em 1fr 5.5em;gap:10px;align-items:center;font-size:14px;padding:4px 6px;border-radius:8px}
+.fb-row[role=button]{cursor:pointer}
+.fb-row[role=button]:hover{background:var(--accent-soft)}
+.fb-row.none{opacity:.5}
+.fb-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fb-bar{height:12px;border-radius:999px;background:var(--line);overflow:hidden}
+.fb-bar i{display:block;height:100%;transition:width .6s ease}
+.fb-bar i.ok{background:var(--ok)} .fb-bar i.warn{background:var(--warn)} .fb-bar i.ng{background:var(--ng)}
+.fb-val{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+.fb-val small{font-weight:400;color:var(--muted)}
+.badge.ok{background:var(--ok-soft);color:var(--ok)} .badge.warn{background:var(--warn-soft);color:var(--warn)} .badge.ng{background:var(--ng-soft);color:var(--ng)}
+.hardbtn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;min-height:36px}
+.hardbtn.on{background:var(--warn-soft);border-color:var(--warn);color:var(--warn);font-weight:700}
+.fb .src{font-size:12px;color:var(--muted)}
+.miss{font-size:14px;padding:6px 10px;border-left:3px solid var(--ng);margin:4px 0;background:var(--bg);border-radius:6px}
+.hard-item .stem{margin:4px 0}
+@media (max-width:420px){ .world{grid-template-columns:44px 1fr} .world .pic.thumb{display:none} .fb-row{grid-template-columns:5.5em 1fr 4.5em;font-size:13px} }

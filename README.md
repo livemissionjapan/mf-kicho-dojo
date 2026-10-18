@@ -1,6 +1,8 @@
-# 記帳道場 — MF記帳レベルチェック（LMJスタッフ向け）
+# 記帳道場 — 経理の実務知識レベルチェック（LMJスタッフ向け）
 
-マネーフォワード クラウド会計で記帳するための「考え方」（仕訳の型・消費税の区分・帳簿チェックの観点・MF画面の連動）を、7章・29ステージのゲーム形式で身につける静的Webアプリ。進捗は端末（localStorage）と、指導者用の Google スプレッドシートに記録する。
+簿記の基本は分かっていて現場で経理をしている人が、**一般的な会計の実務知識**（取引の見方・日々の仕訳・消費税・給与と社保・固定資産・月次チェック・決算整理・BS/PLの読み方）を場面から考えて身につける静的Webアプリ。最初に20問の実力診断で分野ごとの得意・苦手を見える化し、8章・28ステージをゲーム形式で進む。問題ごとに Codex（image2）で生成したマンガ風の1コマ絵を添える。進捗は「名前＋4桁の合言葉」で本人に紐づけ、端末（localStorage）と指導者用の Google スプレッドシートに記録し、別の端末でも復元できる。
+
+v1（2026-10-15、記帳エンジンの監査ルールを元にした7章版）は 2026-10-18 の石島さんの指摘で作り直した。v1 の問題・図解は使っていない。
 
 - 公開URL：https://livemissionjapan.github.io/mf-kicho-dojo/ （GitHub Pages・独立リポジトリ `livemissionjapan/mf-kicho-dojo`）
 - 進捗スプレッドシート：https://docs.google.com/spreadsheets/d/1CUeTd0LeKLGeB3JlTae5KYr-KZgq1eEJQo_4hBDkp74/edit （石島さんのDrive。タブ：README／進捗ログ／ダッシュボード）
@@ -13,17 +15,24 @@
 |---|---|
 | `index.html` | 画面の骨組み（名前／ワールドマップ／章／ステージ／結果）。`window.GAS_URL` をここで設定 |
 | `css/app.css` | 見た目。ライト／ダーク対応。図解用のCSS変数 `--d-*` もここ |
-| `js/app.js` | 進行・出題（6タイプ）・採点・クリア判定・結果 |
-| `js/store.js` | localStorage（版キー `kicho-dojo:v1`）と未送信キュー |
-| `js/sheet.js` | GAS への送信（POST は no-cors、GET `?action=ack` で受領確認してキューを落とす） |
-| `js/diagrams.js` | 図解14枚（インラインSVG＋操作）。`data-link` が同じ要素は一緒に光る |
-| `data/curriculum.js` | 章・ステージ・クリア条件・図解の対応。問題タイプの契約もここ |
-| `data/questions.js` | 問題バンク。`stage` でステージに束ねる。各問に `source`（出典ID） |
-| `gas/Code.js` | doPost（進捗ログに追記・logId で二重防止）／doGet（ack・ping・setup） |
+| `js/app.js` | 進行・実力診断・出題（6タイプ）・採点・クリア判定・「むずかしかった」の印・結果 |
+| `js/store.js` | localStorage（版キー `kicho-dojo:v2`）、未送信キュー、サーバー記録の取り込み（merge） |
+| `js/sheet.js` | GAS との通信（`restore` で名前＋合言葉の記録を取得、POST は no-cors、`ack` で受領確認） |
+| `js/diagrams.js` | 図解10枚（インラインSVG＋操作）。`data-link` が同じ要素は一緒に光る |
+| `data/curriculum.js` | 分野・実力診断・章・ステージ・図解と画像の対応。問題タイプの契約と画像の共通スタイルもここ |
+| `data/questions-a.js` / `questions-b.js` | 問題バンク（前半：診断＋1〜3章、後半：4〜8章）。各問に `field`・`scene`（画像の場面）・`source` |
+| `img/<id>.jpg` | 画像（章 `c1`…、ステージ `s1-1`…、問題 `q1-1-a`…、診断 `diag`）。`scripts/gen_images.py` で生成 |
+| `gas/Code.js` | doPost（受講者の合言葉を確かめて進捗ログに追記・logId で二重防止）／doGet（restore・ack・ping・setup） |
 
 ビルド不要。外部依存は Google Fonts だけ。
 
-## 教材の正本と出典ID
+## 対象と書き方（v2）
+
+- 対象：簿記の基本は分かっていて、現場で経理をやっている人（LMJのスタッフ）
+- 問題は「場面から始める・1問1論点・選択肢は現場でやりがちな誤り・解説は『なぜ』＋『現場ではこう見る』」。AI向けの運用用語（確認に回す・自動登録・判定4区分）やルールIDは使わない
+- `source` は `curriculum.js` の `sources` のキー（簿記／会計実務／消費税／インボイス／給与実務／税務／月次／決算）
+
+## v1 のときの出典（参考・v2 では元ネタにしない）
 
 | 出典ID | ファイル |
 |---|---|
@@ -41,12 +50,25 @@
 ## 更新手順
 
 ### 問題を足す・直す
-1. `data/questions.js` に追記（`stage` と `type` は `data/curriculum.js` の契約どおり。`source` 必須）
-2. 検証：`node -e 'global.window={};require("./data/curriculum.js");require("./data/questions.js");console.log(window.QUESTIONS.length)'`
+1. `data/questions-a.js`（診断＋1〜3章）か `questions-b.js`（4〜8章）に追記（`stage`・`type`・`field`・`scene`・`source` は `data/curriculum.js` の契約どおり）
+2. 検証：`node -e 'global.window={};require("./data/curriculum.js");require("./data/questions-a.js");require("./data/questions-b.js");console.log(window.QUESTIONS_A.length+window.QUESTIONS_B.length)'`
+3. 画像を足す：`python3 scripts/gen_images.py --only <問題id> --from-questions`（下の「画像の作り方」）
 3. ブラウザで `index.html` を開いて該当ステージを解く
 4. `git commit` → `git push origin main`（数十秒で公開に反映）
 
 ステージの問題数を増やしても、クリア条件（正答率）はそのまま効く。問題バンクの版を上げるときは `data/curriculum.js` の `version` も上げる（結果画面とログに出る）。
+
+### 画像（章の扉絵・ステージの場面絵）を作る
+場面の指定は `data/curriculum.js` の `imageStyle`（共通）と各 `scene`（diag・c1〜c8・s1-1〜s8-3＝37枚）。Codex 内蔵の image2（gpt-image-2）で生成する。
+
+```bash
+python3 scripts/gen_images.py --from-curriculum --only c1                     # まず1枚試す（約100秒）
+python3 scripts/gen_images.py --from-curriculum --parallel 3 --skip-existing  # 残りを並列3で（37枚で20〜30分）
+```
+
+- ChatGPT サブスク枠で動く（`codex login status` が「Logged in using ChatGPT」であること）。API キー（`.env`）は使わず、戻りの `MODEL: gpt-image-2` を1枚ごとに検証する（違えば失敗扱い・自動で1回リトライ）
+- 出力：`img/<id>.jpg`（横960px・品質80・Web配信用）。原寸PNGは `img/_raw/`、作業ログは `_stock/`、結果は `img/_log.jsonl`。`_raw` と `_stock` は `.gitignore` 済みで Git に入れない
+- 画像に文字・数字・吹き出しは入れない（日本語が崩れるため。説明文は HTML 側で出す）。`scene` を直したら `--only <id>` で該当の1枚だけ作り直す
 
 ### 進捗の保存先（GAS）を直す
 1. `gas/Code.js` を編集
@@ -57,7 +79,12 @@
 ウェブアプリURL（`index.html` の `window.GAS_URL`）は README 末尾の「公開情報」に記録する。
 
 ### localStorage の版
-保存形式を変えるときは `js/store.js` の `KEY` を `kicho-dojo:v2` に上げる（古い端末の進捗は初期化される）。
+保存形式を変えるときは `js/store.js` の `KEY` を上げる（古い端末の進捗は初期化されるが、名前＋合言葉でスプレッドシートから戻る）。
+
+### 進捗の復元（名前＋合言葉）
+- 初回に名前と4桁の合言葉を決める。GAS の「受講者」シートに名前と合言葉のハッシュ（SHA-256）を保存
+- 別の端末で同じ名前＋合言葉を入れると、`?action=restore` が進捗ログを集計して返し、端末の記録と良い方を残して合流する
+- 合言葉を忘れた人は、石島さんが「受講者」シートのその行を消す → 次回は新規登録になる（進捗ログは残るので、同じ名前で登録し直せば記録も戻る）
 
 ## 検証のしかた
 

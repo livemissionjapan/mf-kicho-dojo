@@ -144,7 +144,7 @@ function summarize_(name) {
 function doGet(e) {
   const p = (e && e.parameter) || {};
   if (p.action === "ping") return json_({ ok: true });
-  if (p.action === "setup") { setupDashboard(); return json_({ ok: true, setup: true }); }
+  if (p.action === "setup") { const mig = setupDashboard(); return json_({ ok: true, setup: true, migrated: mig }); }
   if (p.action === "restore" || p.action === "ack") {
     const name = String(p.name || "").trim(), pin = String(p.pin || "").trim();
     if (!name || !/^\d{4}$/.test(pin)) return json_({ error: "bad user" });
@@ -180,10 +180,44 @@ function doGet(e) {
   return json_({ ok: true, usage: "POST progress / GET ?action=restore&name&pin" });
 }
 
+/* 列の並びが古い行を新しい並びに移す（2026-10-19：16列→18列）。v1（2026-10-15.x）の行は v2 にステージがないので外す。logId の重複も消す */
+function migrateLog_() {
+  const sh = logSheet_();
+  const last = sh.getLastRow(); if (last < 1) return { migrated: 0 };
+  const width = Math.max(sh.getLastColumn(), HEADER.length);
+  const head = sh.getRange(1, 1, 1, width).getValues()[0].map(String);
+  const oldHeader = ["送信日時", "受講者名", "端末ID", "章ID", "章名", "ステージID", "ステージ名", "正答数", "問題数", "正答率", "クリア", "所要秒", "弱い出典", "アプリ版", "logId", "受信日時"];
+  const isOldHead = head.slice(0, 16).join("|") === oldHeader.join("|");
+  const isNewHead = head.slice(0, HEADER.length).join("|") === HEADER.join("|");
+  if (isNewHead) return { migrated: 0 };
+  if (!isOldHead) return { migrated: 0, note: "unknown header" };
+  const rows = last >= 2 ? sh.getRange(2, 1, last - 1, width).getValues() : [];
+  const out = []; const seen = new Set(); let dropped = 0;
+  rows.forEach(r => {
+    let n;
+    if (String(r[16] || "")) { // 新しい並びで書かれた行（Q列に logId がある）
+      n = r.slice(0, 18);
+    } else { // 古い並び：弱い出典のあとに「難しかった問題」「分野別」を挟む
+      n = r.slice(0, 13).concat(["", ""], r.slice(13, 16));
+    }
+    const app = String(n[15] || ""), id = String(n[16] || "");
+    if (/^2026-10-15/.test(app)) { dropped++; return; }
+    if (!id || seen.has(id)) { dropped++; return; }
+    seen.add(id); out.push(n);
+  });
+  sh.clear();
+  sh.getRange(1, 1, 1, HEADER.length).setValues([HEADER]);
+  sh.setFrozenRows(1);
+  sh.getRange("A:A").setNumberFormat("yyyy/mm/dd hh:mm"); sh.getRange("R:R").setNumberFormat("yyyy/mm/dd hh:mm"); sh.getRange("J:J").setNumberFormat("0%");
+  if (out.length) sh.getRange(2, 1, out.length, HEADER.length).setValues(out);
+  return { migrated: out.length, dropped };
+}
+
 /* 初回・列を変えたときに実行：ダッシュボードを作り直す */
 function setupDashboard() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   logSheet_(); userSheet_();
+  const mig = migrateLog_();
   const def = ss.getSheetByName("シート1") || ss.getSheetByName("Sheet1");
   if (def && def.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(def);
   let d = ss.getSheetByName("ダッシュボード");
@@ -205,5 +239,7 @@ function setupDashboard() {
   let r = ss.getSheetByName("README");
   if (!r) r = ss.insertSheet("README", 0);
   r.clear();
+  const __ret = mig;
   r.getRange("A1:A9").setValues([["記帳道場 — 進捗の記録"], ["アプリ：https://livemissionjapan.github.io/mf-kicho-dojo/"], ["「進捗ログ」はアプリがステージ（実力診断を含む）を終えるたびに1行追記します（手で編集しない）。"], ["「受講者」は名前と合言葉（ハッシュ）。本人が別の端末で同じ名前＋合言葉を入れると進捗が戻ります。合言葉を忘れたら、この行を消せば次回は新規登録になります（進捗ログは残ります）。"], ["「ダッシュボード」は進捗ログの集計です。"], ["同じ logId の行は二重に入りません（再送に強い）。"], ["ソース：lmj/30_開発/学習/mf-kicho-dojo/gas/Code.js（clasp で同期）"], [""], ["進捗ログの列：送信日時／受講者名／端末ID／章ID／章名／ステージID／ステージ名／正答数／問題数／正答率／クリア／所要秒／弱い分野／難しかった問題／分野別（JSON）／アプリ版／logId／受信日時"]]);
+  return __ret;
 }

@@ -306,3 +306,18 @@
 {"id": "e-q8-3-a", "ok": true, "model": "gpt-image-2", "seconds": 102.5, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-26T10:57:29"}
 {"id": "e-q8-2-c", "ok": true, "model": "gpt-image-2", "seconds": 142.4, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-26T10:57:50"}
 {"id": "e-q8-3-c", "ok": true, "model": "gpt-image-2", "seconds": 122.6, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-26T10:59:23"}
+{"id": "q1-1-d", "ok": true, "model": "gpt-image-2", "seconds": 112.0, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-27T00:11:29"}
+{"id": "q1-1-e", "ok": true, "model": "gpt-image-2", "seconds": 128.3, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-27T00:11:46"}
+{"id": "e-q1-1-d", "ok": true, "model": "gpt-image-2", "seconds": 149.0, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-27T00:12:06"}
+{"id": "e-q1-1-f", "ok": false, "model": "", "seconds": 10.4, "error": "codex の最終メッセージが空（codex.log を確認）", "attempts": 2, "raw_size": "", "at": "2026-10-27T00:12:17"}
+{"id": "q1-1-g", "ok": false, "model": "", "seconds": 9.7, "error": "codex の最終メッセージが空（codex.log を確認）", "attempts": 2, "raw_size": "", "at": "2026-10-27T00:12:27"}
+{"id": "e-q1-1-g", "ok": false, "model": "", "seconds": 8.0, "error": "codex の最終メッセージが空（codex.log を確認）", "attempts": 2, "raw_size": "", "at": "2026-10-27T00:12:35"}
+{"id": "q1-1-h", "ok": false, "model": "", "seconds": 7.6, "error": "codex の最終メッセージが空（codex.log を確認）", "attempts": 2, "raw_size": "", "at": "2026-10-27T00:12:42"}
+{"id": "e-q1-1-h", "ok": false, "model": "", "seconds": 9.4, "error": "codex の最終メッセージが空（codex.log を確認）", "attempts": 2, "raw_size": "", "at": "2026-10-27T00:12:52"}
+{"id": "q1-1-i", "ok": false, "model": "", "seconds": 8.1, "error": "codex の最終メッセージが空（codex.log を確認）", "attempts": 2, "raw_size": "", "at": "2026-10-27T00:13:00"}
+{"id": "e-q1-1-i", "ok": false, "model": "", "seconds": 8.4, "error": "codex の最終メッセージが空（codex.log を確認）", "attempts": 2, "raw_size": "", "at": "2026-10-27T00:13:08"}
+{"id": "e-q1-1-e", "ok": true, "model": "gpt-image-2", "seconds": 104.1, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-27T00:13:14"}
+{"id": "q1-1-j", "ok": false, "model": "", "seconds": 7.8, "error": "codex の最終メッセージが空（codex.log を確認）", "attempts": 2, "raw_size": "", "at": "2026-10-27T00:13:16"}
+{"id": "e-q1-1-j", "ok": false, "model": "", "seconds": 8.6, "error": "codex の最終メッセージが空（codex.log を確認）", "attempts": 2, "raw_size": "", "at": "2026-10-27T00:13:22"}
+{"id": "q1-1-f", "ok": true, "model": "gpt-image-2", "seconds": 105.4, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-10-27T00:13:31"}
+{"id": "e-q1-1-f", "ok": false, "model": "", "seconds": 8.6, "error": "codex の最終メッセージが空（codex.log を確認）", "attempts": 2, "raw_size": "", "at": "2026-10-27T00:14:37"}

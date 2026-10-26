@@ -1,7 +1,7 @@
 /* 記帳道場 v2 — 画面の進行・出題・採点・診断・進捗 */
 (function () {
   const C = window.CURRICULUM;
-  const Q = [].concat(window.QUESTIONS_A || [], window.QUESTIONS_B || [], window.QUESTIONS || []);
+  const Q = [].concat(window.QUESTIONS_A || [], window.QUESTIONS_B || [], window.QUESTIONS_ADD1 || [], window.QUESTIONS_ADD2 || [], window.QUESTIONS_ADD3 || [], window.QUESTIONS_ADD4 || [], window.QUESTIONS || []);
   const D = window.DIAGRAMS || {};
   const $ = (s, r) => (r || document).querySelector(s);
   const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };

@@ -20,7 +20,7 @@ v1（2026-10-15、記帳エンジンの監査ルールを元にした7章版）�
 | `js/sheet.js` | GAS との通信（`restore` で名前＋合言葉の記録を取得、POST は no-cors、`ack` で受領確認） |
 | `js/diagrams.js` | 図解10枚（インラインSVG＋操作）。`data-link` が同じ要素は一緒に光る |
 | `data/curriculum.js` | 分野・実力診断・章・ステージ・図解と画像の対応。問題タイプの契約と画像の共通スタイルもここ |
-| `data/questions-a.js` / `questions-b.js` | 問題バンク（前半：診断＋1〜3章、後半：4〜8章）。各問に `field`・`scene`（画像の場面）・`source` |
+| `data/questions-a.js` / `questions-b.js` / `questions-add-1〜4.js` | 問題バンク（a：診断＋1〜3章の a〜c、b：4〜8章の a〜c、add-1〜4：各ステージの d〜j）。2026-10-27 から各ステージ10問・合計300問。各問に `field`・`scene`・`explainScene`・`source` |
 | `img/<id>.jpg` | 画像（章 `c1`…、ステージ `s1-1`…、問題 `q1-1-a`…、診断 `diag`）。`scripts/gen_images.py` で生成 |
 | `gas/Code.js` | doPost（受講者の合言葉を確かめて進捗ログに追記・logId で二重防止）／doGet（restore・ack・ping・setup） |
 

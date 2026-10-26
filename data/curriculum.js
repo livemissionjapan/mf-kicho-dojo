@@ -4,12 +4,12 @@
  * 問題は data/questions.js。図解は js/diagrams.js。画像は img/<id>.jpg（Codex image2 で生成）。
  */
 window.CURRICULUM = {
-  version: "2026-10-18.2",
+  version: "2026-10-26.3",
   appName: "記帳道場",
   passRate: 0.8,
   /* 問題タイプ（questions.js の type と一致させる）
    * mc      4択              {stem, choices[], answer:index, explanation, source}
-   * journal 仕訳を組む        {stem, slots:{debit[],credit[],tax[]}, answer:{debit,credit,tax}}
+   * journal 仕訳を組む        {stem, slots:{debit[],credit[],tax[]}, answer:{debit,debitTax,credit,creditTax}}（借方・貸方それぞれに税区分）
    * sort2   二択（例：このまま登録してよい／確認する） {stem, choices[2], answer:index}
    * spot    表から異常を見つける（行タップ・全行一致） {stem, header[], rows[[...]], answer:[index...]}
    * order   順番に並べる       {stem, items[]（正しい順）}

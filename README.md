@@ -26,6 +26,20 @@ v1（2026-10-15、記帳エンジンの監査ルールを元にした7章版）�
 
 ビルド不要。外部依存は Google Fonts だけ。
 
+## 入口と財務ルート（2026-10-19 追加）
+
+ログイン（名前＋合言葉）の後は入口（`#track`）で「経理を学ぶ」「財務を学ぶ」を選ぶ。経理＝これまでのワールドマップ、財務＝財務アドバイザー・カルロさんの考え方（`#finance`）。
+
+| ファイル | 中身 |
+|---|---|
+| `data/finance.js` | 財務ルートの中身（一般化版）：セッション一覧・思考回路の5段・視点11・思考の実演・知識カード・盗める型 |
+| `js/finance.js` | 入口と財務ルートの画面。視点を押すと発言の一覧（ダイアログ） |
+| `data/finance-images.json` | 財務ルートの画像17枚の場面（入口 `t-keiri`/`t-zaimu`、`f-hero`、視点 `f-<視点id>`、思考の実演 `f-t1`〜）。`python3 scripts/gen_images.py --input data/finance-images.json --skip-existing` |
+
+- **公開リポジトリなので、顧客名・実金額・録音IDは入れない。** 発言は金額を抜いた言い換え、制度の数字（税率・上限・期限）だけ残す
+- 実際の会議の数字が入った版はローカルの `lmj/30_開発/Webサイト/carlo-board`（非公開）。新しいセッションはまず carlo-board に入れ、一般化して `data/finance.js` に足す
+- 財務ルートの閲覧は進捗ログに記録しない（今は読むだけ）
+
 ## 対象と書き方（v2）
 
 - 対象：簿記の基本は分かっていて、現場で経理をやっている人（LMJのスタッフ）
@@ -101,3 +115,14 @@ python3 scripts/gen_images.py --from-curriculum --parallel 3 --skip-existing  # 
 - `?action=setup` は列の並びが古い進捗ログを新しい並びへ移し、v1（2026-10-15.x）の行と logId の重複を外す（2026-10-19）
 - 検証用GET：`?action=ping`／`?action=setup`（ダッシュボード作り直し）／`?action=count&deviceId=…`／`?action=cleanup_test`（受講者名「接続テスト」「動作確認テスト」の行だけ削除）
 - clasp のトークンは失効しやすい（`invalid_rapt`）。`clasp push` が失敗したら `clasp login` で再認証
+
+## v2.2（2026-10-26）石島さんの指摘への対応
+
+| 指摘 | 対応 |
+|---|---|
+| 仕訳が縦並び・税区分が片側 | 借方｜貸方を左右に並べ、それぞれ科目＋税区分を選ぶ。答えは `answer:{debit, debitTax, credit, creditTax}`（BS科目は「対象外（不課税）」） |
+| 解説が短い・絵がほしい | 全問の `explanation` を「結論→なぜ→やりがちな誤り→現場ではこう見る」の4〜6文に。`explainScene` から解説の絵 `img/e-<id>.jpg` を生成（仕訳問題は正解の仕訳表をラベル入りで） |
+| 図解が文字ばかりで小さい | 図解の上にラベル入りの説明図 `img/d-<S〜>.jpg`。SVG は横スクロール枠で原寸表示 |
+| 今いる場所が分からない | 画面上部に現在地（入口（トップ）› 経理の道 › 第N章 › 📍 ステージ）。各段をタップで戻れる |
+
+ラベル入りの説明図（図解・仕訳表）は `scripts/gen_images.py --input <json>` に `prompt` を直接渡す（文字を入れる指示を含める。`_stock/diagram_prompts.json` が例）。マンガ場面の絵は `scene` 渡し（文字なしの共通ルールが付く）。

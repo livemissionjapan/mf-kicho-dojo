@@ -7,6 +7,7 @@
   const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const pic = (id, cls) => id ? `<img class="pic ${cls || ""}" src="img/${esc(id)}.jpg" alt="" loading="lazy" onerror="this.remove()">` : "";
+  const expHtml = t => String(t || "").split(/\n+/).map(p => "<p>" + esc(p) + "</p>").join("");
   const fieldOf = id => C.fields.find(f => f.id === id);
   const chapterOfField = fid => C.chapters.find(c => c.field === fid);
 
@@ -26,7 +27,34 @@
   const overallRate = () => stagesFlat.filter(s => isCleared(s.id)).length / stagesFlat.length;
 
   /* ---------- 共通UI ---------- */
-  function show(id) { document.querySelectorAll(".view").forEach(v => v.classList.remove("active")); $("#" + id).classList.add("active"); window.scrollTo({ top: 0 }); }
+  function show(id) { document.querySelectorAll(".view").forEach(v => v.classList.remove("active")); $("#" + id).classList.add("active"); window.scrollTo({ top: 0 }); setCrumb(id); }
+  /* ---------- 現在地（パンくず） ---------- */
+  function setCrumb(view) {
+    const parts = [];
+    const top = { label: "入口（トップ）", go: () => window.Finance && window.Finance.renderTrack() };
+    const keiri = { label: "経理の道", go: renderHome };
+    if (view === "name") parts.push({ label: "はじめに" });
+    else if (view === "track") parts.push({ label: "入口（トップ）", here: true });
+    else if (view === "home") parts.push(top, { label: "経理の道 ワールドマップ", here: true });
+    else if (view === "hard") parts.push(top, keiri, { label: "むずかしかった問題", here: true });
+    else if (view === "finance") parts.push(top, { label: "財務の部屋", here: true });
+    else if (view === "chapter" && current && current.chapterView) parts.push(top, keiri, { label: `第${current.chapterView.no}章 ${current.chapterView.name}`, here: true });
+    else if ((view === "stage" || view === "result") && current) {
+      parts.push(top, keiri);
+      if (current.kind === "diag") parts.push({ label: "実力診断", here: view === "stage" });
+      else { const ch = current.chapter; parts.push({ label: `第${ch.no}章 ${ch.name}`, go: () => openChapter(ch.id) }); parts.push({ label: `${ch.no}-${ch.stages.findIndex(x => x.id === current.stage.id) + 1} ${current.stage.name}`, here: view === "stage" }); }
+      if (view === "result") parts.push({ label: "結果", here: true });
+    }
+    const host = $("#crumb"); if (!host) return;
+    host.innerHTML = "";
+    if (!parts.length) { host.style.display = "none"; return; }
+    host.style.display = "";
+    parts.forEach((p, i) => {
+      if (i) host.appendChild(el("span", "sep", "›"));
+      if (p.go && !p.here) { const b = el("button", "crumb-link", esc(p.label)); b.type = "button"; b.addEventListener("click", p.go); host.appendChild(b); }
+      else host.appendChild(el("span", p.here ? "here" : "", (p.here ? "📍 " : "") + esc(p.label)));
+    });
+  }
   function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2400); }
   function confetti() {
     const box = el("div", "confetti"); document.body.appendChild(box);
@@ -59,8 +87,9 @@
     wrap.appendChild(el("div", "d-title", esc(d.title)));
     if (d.caption) wrap.appendChild(el("div", "d-caption", esc(d.caption)));
     if (d.hint) wrap.appendChild(el("div", "d-hint", "▶ " + esc(d.hint)));
+    wrap.insertAdjacentHTML("beforeend", `<img class="d-pic" src="img/d-${esc(key)}.jpg" alt="" loading="lazy" onerror="this.remove()">`);
     if (d.controls) wrap.insertAdjacentHTML("beforeend", d.controls);
-    wrap.insertAdjacentHTML("beforeend", d.svg);
+    wrap.insertAdjacentHTML("beforeend", '<div class="d-scroll">' + d.svg + '</div>');
     host.appendChild(wrap);
     wrap.querySelectorAll("[data-link]").forEach(n => {
       const key = n.getAttribute("data-link");
@@ -121,7 +150,7 @@
     const items = s.hard.map(id => qById[id]).filter(Boolean);
     const box = $("#hard-box");
     box.innerHTML = `<div class="row"><h2 style="margin:0">むずかしかった問題</h2><span class="sp"></span><button class="btn secondary" data-go="home" type="button">← マップ</button></div>` +
-      (items.length ? items.map(q => { const st = stagesFlat.find(x => x.id === q.stage); return `<div class="card hard-item"><div class="muted">${st ? `第${st.chapter.no}章 ${esc(st.name)}` : "実力診断"}・${esc(fieldOf(q.field) ? fieldOf(q.field).name : "")}</div><div class="stem" style="font-size:15px">${esc(q.stem)}</div><div class="muted">${esc(q.explanation)}</div><div class="row" style="margin-top:6px"><button class="d-btn" data-unhard="${esc(q.id)}" type="button">印を外す</button>${st ? `<button class="d-btn" data-stage="${esc(st.id)}" type="button">このステージをやり直す</button>` : ""}</div></div>`; }).join("") : "<p class='muted'>まだありません</p>");
+      (items.length ? items.map(q => { const st = stagesFlat.find(x => x.id === q.stage); return `<div class="card hard-item"><div class="muted">${st ? `第${st.chapter.no}章 ${esc(st.name)}` : "実力診断"}・${esc(fieldOf(q.field) ? fieldOf(q.field).name : "")}</div><div class="stem" style="font-size:15px">${esc(q.stem)}</div><div class="muted exp">${expHtml(q.explanation)}</div><div class="row" style="margin-top:6px"><button class="d-btn" data-unhard="${esc(q.id)}" type="button">印を外す</button>${st ? `<button class="d-btn" data-stage="${esc(st.id)}" type="button">このステージをやり直す</button>` : ""}</div></div>`; }).join("") : "<p class='muted'>まだありません</p>");
     box.querySelectorAll("[data-go=home]").forEach(b => b.addEventListener("click", renderHome));
     box.querySelectorAll("[data-unhard]").forEach(b => b.addEventListener("click", () => { Store.toggleHard(b.dataset.unhard, false); showHardList(); }));
     box.querySelectorAll("[data-stage]").forEach(b => b.addEventListener("click", () => startStage(b.dataset.stage)));
@@ -132,6 +161,7 @@
   let current = null;
   function openChapter(chId) {
     const ch = C.chapters.find(c => c.id === chId);
+    current = Object.assign(current || {}, { chapterView: ch });
     $("#ch-title").textContent = `第${ch.no}章　${ch.name}`;
     $("#ch-sub").textContent = ch.sub;
     $("#ch-goal").textContent = ch.goal;
@@ -202,7 +232,7 @@
     const fv = current.fields[q.field] || { c: 0, t: 0 }; fv.t++; if (ok) fv.c++; current.fields[q.field] = fv;
     const fb = $("#q-fb"); fb.className = "fb " + (ok ? "good" : "bad");
     const hard = Store.isHard(q.id);
-    fb.innerHTML = `<div class="ttl">${ok ? "正解！" : "惜しい"}${detail ? "　<span class='muted' style='font-weight:400'>" + esc(detail) + "</span>" : ""}</div><div>${esc(q.explanation)}</div>
+    fb.innerHTML = `<div class="ttl">${ok ? "正解！" : "惜しい"}${detail ? "　<span class='muted' style='font-weight:400'>" + esc(detail) + "</span>" : ""}</div>${pic("e-" + (q.img || q.id), "explain")}<div class="exp">${expHtml(q.explanation)}</div>
       <div class="row" style="margin-top:8px"><span class="src">${esc(q.source || "")}</span><span class="sp"></span><button class="hardbtn${hard ? " on" : ""}" type="button" aria-pressed="${hard}">${hard ? "✓ むずかしかった" : "むずかしかった"}</button></div>`;
     fb.querySelector(".hardbtn").addEventListener("click", ev => {
       const b = ev.currentTarget; const on = !b.classList.contains("on");
@@ -225,19 +255,31 @@
     },
     journal(q, box) {
       const picked = {}; const wrap = el("div", "journal");
-      const labels = { debit: "借方（科目）", credit: "貸方（科目）", tax: "税区分" };
-      ["debit", "credit", "tax"].forEach(k => {
-        const slot = el("div", "slot"); slot.appendChild(el("div", "lbl", labels[k])); const chips = el("div", "chips");
-        (q.slots[k] || []).forEach(v => { const c = el("button", "chip", esc(v)); c.type = "button"; c.dataset.v = v; c.addEventListener("click", () => { if (current.answered) return; picked[k] = v; chips.querySelectorAll(".chip").forEach(x => x.classList.toggle("sel", x.dataset.v === v)); btn.disabled = !(picked.debit && picked.credit && picked.tax); }); chips.appendChild(c); });
-        slot.appendChild(chips); wrap.appendChild(slot);
-      });
+      const sides = [["debit", "借方", "debitTax"], ["credit", "貸方", "creditTax"]];
+      const form = el("div", "jform");
       const btn = el("button", "btn block", "この仕訳で登録"); btn.type = "button"; btn.disabled = true;
+      const check = () => { btn.disabled = !(picked.debit && picked.credit && picked.debitTax && picked.creditTax); };
+      sides.forEach(([k, label, tk]) => {
+        const col = el("div", "jcol " + k);
+        col.appendChild(el("div", "jhead", label));
+        col.appendChild(el("div", "lbl", "科目"));
+        const chips = el("div", "chips");
+        (q.slots[k] || []).forEach(v => { const c = el("button", "chip", esc(v)); c.type = "button"; c.dataset.v = v; c.dataset.k = k; c.addEventListener("click", () => { if (current.answered) return; picked[k] = v; chips.querySelectorAll(".chip").forEach(x => x.classList.toggle("sel", x.dataset.v === v)); check(); }); chips.appendChild(c); });
+        col.appendChild(chips);
+        col.appendChild(el("div", "lbl", "税区分"));
+        const tchips = el("div", "chips tax");
+        (q.slots.tax || []).forEach(v => { const c = el("button", "chip", esc(v)); c.type = "button"; c.dataset.v = v; c.dataset.k = tk; c.addEventListener("click", () => { if (current.answered) return; picked[tk] = v; tchips.querySelectorAll(".chip").forEach(x => x.classList.toggle("sel", x.dataset.v === v)); check(); }); tchips.appendChild(c); });
+        col.appendChild(tchips);
+        form.appendChild(col);
+      });
+      wrap.appendChild(form);
       btn.addEventListener("click", () => {
         if (current.answered) return; let okAll = true;
-        ["debit", "credit", "tax"].forEach((k, i) => { const ok = picked[k] === q.answer[k]; if (!ok) okAll = false; wrap.querySelectorAll(".slot")[i].querySelectorAll(".chip").forEach(c => { if (c.dataset.v === q.answer[k]) c.classList.add("correct"); else if (c.dataset.v === picked[k]) c.classList.add("wrong"); }); });
-        wrap.querySelectorAll(".chip").forEach(c => c.disabled = true); btn.disabled = true;
-        wrap.appendChild(el("div", "tform", `<div>借方：${esc(q.answer.debit)}</div><div>貸方：${esc(q.answer.credit)}</div><div>税区分：${esc(q.answer.tax)}</div>`));
-        finishQuestion(q, okAll, okAll ? "" : "正しい組み合わせを緑で表示");
+        ["debit", "debitTax", "credit", "creditTax"].forEach(k => { if (picked[k] !== q.answer[k]) okAll = false; });
+        wrap.querySelectorAll(".chip").forEach(c => { const k = c.dataset.k; if (c.dataset.v === q.answer[k]) c.classList.add("correct"); else if (c.dataset.v === picked[k]) c.classList.add("wrong"); c.disabled = true; });
+        btn.disabled = true;
+        wrap.appendChild(el("table", "jresult", `<thead><tr><th colspan="2">借方</th><th colspan="2">貸方</th></tr></thead><tbody><tr><td>${esc(q.answer.debit)}</td><td class="tx">${esc(q.answer.debitTax)}</td><td>${esc(q.answer.credit)}</td><td class="tx">${esc(q.answer.creditTax)}</td></tr></tbody>`));
+        finishQuestion(q, okAll, okAll ? "" : "正しい仕訳を緑で表示");
       });
       wrap.appendChild(btn); box.appendChild(wrap);
     },
@@ -357,7 +399,7 @@
     else if (res.ok && !res.new) { Store.merge(res); const n = Object.keys(res.stages || {}).length; toast(n ? `おかえりなさい。${n}ステージ分の記録を読み込みました` : "おかえりなさい"); }
     else toast("はじめまして。この名前と合言葉で記録します");
     $("#name-msg").textContent = "";
-    renderHome(); Sheet.flush().then(renderHomeQuiet);
+    window.Finance.renderTrack(); Sheet.flush().then(renderHomeQuiet);
   });
   $("#who-change").addEventListener("click", () => { const s = Store.load(); $("#name-input").value = s.name; $("#pin-input").value = ""; $("#name-msg").textContent = ""; show("name"); });
   document.querySelectorAll("[data-go=home]").forEach(b => b.addEventListener("click", renderHome));
@@ -366,10 +408,10 @@
   function renderHomeQuiet() { const s = Store.load(); const n = $("#queue-note"); if (n) n.textContent = s.queue.length ? `未送信の記録 ${s.queue.length} 件` : ""; }
 
   /* 検証用フック */
-  window.KichoDojo = { startStage, startDiag, openChapter, renderHome, get current() { return current; }, stagesFlat, qByStage, Q };
+  window.KichoDojo = { startStage, startDiag, openChapter, renderHome, setCrumb, get current() { return current; }, stagesFlat, qByStage, Q };
 
   /* ---------- 起動 ---------- */
   $("#ver").textContent = "版 " + C.version + "・問題 " + Q.length + "問";
   const s = Store.load();
-  if (s.name && s.pin) { renderHome(); Sheet.flush().then(renderHomeQuiet); } else show("name");
+  if (s.name && s.pin) { window.Finance.renderTrack(); Sheet.flush().then(renderHomeQuiet); } else show("name");
 })();

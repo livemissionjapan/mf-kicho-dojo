@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>記帳道場</title>
-<meta name="description" content="経理の実務知識を、場面から考えて身につけるレベルチェック。実力診断と8つの章">
+<meta name="description" content="経理の実務知識を場面から身につけるレベルチェックと、財務アドバイザーの考え方を学ぶ財務の部屋">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%231f5fbf%27/%3E%3Ctext x=%2732%27 y=%2744%27 font-size=%2734%27 text-anchor=%27middle%27 fill=%27%23fff%27 font-weight=%27700%27%3E帳%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
@@ -13,9 +13,10 @@
 <body>
 <div class="app">
   <header class="top">
-    <button class="brand" data-go="home" type="button"><span class="mark">帳</span>記帳道場</button>
+    <button class="brand" data-go="track" type="button"><span class="mark">帳</span>記帳道場</button>
     <div class="who"><span id="who-name"></span><button id="who-change" type="button">名前・合言葉</button></div>
   </header>
+  <nav class="crumb" id="crumb" aria-label="現在地"></nav>
 
   <!-- 名前・合言葉 -->
   <section id="name" class="view">
@@ -34,8 +35,33 @@
     </div>
   </section>
 
+  <!-- 入口：経理を学ぶ／財務を学ぶ -->
+  <section id="track" class="view">
+    <div class="card">
+      <h1 id="track-hello">今日はどちらを学びますか？</h1>
+      <p class="muted">経理は「日々の仕訳を正しく」、財務は「その数字で会社をどう動かすか」。</p>
+    </div>
+    <div class="tracks">
+      <button class="track-card" id="go-keiri" type="button">
+        <img src="img/t-keiri.jpg" alt="" onerror="this.classList.add('noimg')">
+        <span class="track-tx"><span class="track-tag">経理</span><b>経理を学ぶ</b><span class="muted">実力診断＋8つの章。取引の見方から決算整理まで、場面から考えて身につける</span><span class="track-go">記帳道場へ →</span></span>
+      </button>
+      <button class="track-card zaimu" id="go-zaimu" type="button">
+        <img src="img/t-zaimu.jpg" alt="" onerror="this.classList.add('noimg')">
+        <span class="track-tx"><span class="track-tag">財務</span><b>財務を学ぶ</b><span class="muted">財務アドバイザー・カルロさんの頭の中。視点・思考回路・知識カードで、数字の使い方を盗む</span><span class="track-go">財務の部屋へ →</span></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- 財務ルート -->
+  <section id="finance" class="view">
+    <div class="row" style="margin:8px 0"><button class="btn secondary" data-go="track" type="button">← 入口</button></div>
+    <div id="finance-box"></div>
+  </section>
+
   <!-- ホーム -->
   <section id="home" class="view">
+    <div class="row" style="margin:8px 0"><button class="btn secondary" data-go="track" type="button">← 入口</button></div>
     <div class="card hero">
       <svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle class="track" cx="50" cy="50" r="42"/><circle class="bar" id="ring-bar" cx="50" cy="50" r="42"/><text id="ring-text" x="50" y="57" text-anchor="middle">0%</text></svg>
       <div><h1 style="margin:0">ワールドマップ</h1><div class="muted" id="home-sub"></div><div class="muted" id="hard-note" style="font-size:13px"></div><div class="muted" id="queue-note" style="font-size:12px"></div></div>
@@ -95,6 +121,7 @@
   <footer><span id="ver"></span>　問題の数字は 2026年10月時点の制度にもとづく</footer>
 </div>
 <div class="toast" id="toast"></div>
+<dialog id="lens-dialog"><div id="lens-body"></div><button class="btn secondary" type="button" onclick="this.closest('dialog').close()">閉じる</button></dialog>
 
 <script>window.GAS_URL = "https://script.google.com/macros/s/AKfycbxeHMXOCjEd1-VPHxlM3yyty6kzxCYo2NmnRS3sBOj0piYlnOSu66i6Lpg7Yr9HceaE/exec";</script>
 <script src="data/curriculum.js"></script>
@@ -103,6 +130,8 @@
 <script src="js/diagrams.js"></script>
 <script src="js/store.js"></script>
 <script src="js/sheet.js"></script>
+<script src="data/finance.js"></script>
+<script src="js/finance.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

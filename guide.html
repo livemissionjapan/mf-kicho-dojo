@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>記帳道場 はじめかた</title>
+<meta name="description" content="スタッフ配布用の1枚。URL・QR・始め方3ステップ">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f3ec;--card:#fff;--ink:#1f2328;--muted:#6b7280;--line:#e4e0d6;--accent:#1f5fbf;--accent-soft:#e3ecfb;--ok:#1f8a4c;--warn:#c77a12;--warn-soft:#fdf0db}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15171b;--card:#1f2228;--ink:#e8e6e1;--muted:#9aa0a6;--line:#2e323a;--accent:#6ea3f0;--accent-soft:#1e2d45;--warn:#e9a84a;--warn-soft:#3b2d14}}
+:root[data-theme=dark]{--bg:#15171b;--card:#1f2228;--ink:#e8e6e1;--muted:#9aa0a6;--line:#2e323a;--accent:#6ea3f0;--accent-soft:#1e2d45;--warn:#e9a84a;--warn-soft:#3b2d14}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans JP",system-ui,sans-serif;line-height:1.7}
+.page{max-width:720px;margin:0 auto;padding:24px 16px 48px}
+.hero{display:grid;grid-template-columns:1fr;gap:16px;align-items:center}
+@media(min-width:600px){.hero{grid-template-columns:1fr 200px}}
+h1{font-size:28px;margin:0 0 4px}h2{font-size:18px;margin:0 0 8px}
+.lead{color:var(--muted);margin:0 0 12px}
+.url{display:inline-block;font-weight:900;font-size:18px;color:var(--accent);word-break:break-all;background:var(--accent-soft);padding:8px 12px;border-radius:10px;text-decoration:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:14px 0}
+.qr{background:#fff;padding:10px;border-radius:12px;border:1px solid var(--line);justify-self:center}
+.qr canvas,.qr img{display:block}
+ol.steps{padding:0;margin:0;list-style:none;display:grid;gap:12px}
+ol.steps li{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:start}
+ol.steps .n{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;font-weight:900;display:grid;place-items:center;font-size:18px}
+ol.steps b{display:block;font-size:16px}
+.note{background:var(--warn-soft);border-left:4px solid var(--warn);padding:10px 14px;border-radius:8px;font-size:14px}
+.cover{width:100%;border-radius:12px;display:block}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:600px){.grid{grid-template-columns:repeat(4,1fr)}}
+.grid div{font-size:13px;background:var(--bg);border-radius:10px;padding:8px 10px}
+.grid b{display:block;font-size:14px}
+footer{font-size:12px;color:var(--muted);margin-top:24px;text-align:center}
+@media print{body{background:#fff}.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hero">
+    <div>
+      <h1>記帳道場 はじめかた</h1>
+      <p class="lead">経理の実務で迷うところを、場面から考えて身につけるレベルチェック。スマホでもPCでも、好きな時間に少しずつ。</p>
+      <a class="url" href="https://livemissionjapan.github.io/mf-kicho-dojo/">livemissionjapan.github.io/mf-kicho-dojo/</a>
+    </div>
+    <div class="qr" id="qr" aria-label="アプリのQRコード"></div>
+  </div>
+
+  <div class="card">
+    <img class="cover" src="img/diag.jpg" alt="" onerror="this.remove()">
+  </div>
+
+  <div class="card">
+    <h2>3ステップで始める</h2>
+    <ol class="steps">
+      <li><span class="n">1</span><div><b>上のURLを開く</b>アプリのインストールは不要。ブラウザで開くだけ。スマホのホーム画面に追加しておくと便利です。</div></li>
+      <li><span class="n">2</span><div><b>名前と「合言葉（数字4桁）」を決める</b>合言葉は自分で決めます。別の端末でも同じ名前＋合言葉を入れると、続きから始められます。</div></li>
+      <li><span class="n">3</span><div><b>まず「実力診断」20問（約10分）</b>8つの分野のどこが得意でどこが苦手かがマップで出ます。低いところの章から始めるのがおすすめ。</div></li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>8つの章・28ステージ</h2>
+    <div class="grid">
+      <div><b>1 取引の見方</b>いつ・何を見て仕訳するか</div>
+      <div><b>2 日々の仕訳</b>売掛・買掛・未払・前払・カード</div>
+      <div><b>3 消費税</b>かかる・かからない・8%・インボイス</div>
+      <div><b>4 給与・社保・源泉</b>預り金の流れ</div>
+      <div><b>5 固定資産</b>費用か資産か・減価償却</div>
+      <div><b>6 月次チェック</b>残高・マイナス・二重</div>
+      <div><b>7 決算整理</b>期ずれ・経過勘定・棚卸</div>
+      <div><b>8 BS/PLの読み方</b>利益とお金は違う</div>
+    </div>
+    <p class="lead" style="margin-top:10px">各ステージは3問。正答率80%でクリアすると次が開きます。問題ごとに「むずかしかった」の印を付けておくと、あとで一覧で見直せます。</p>
+  </div>
+
+  <div class="note">
+    <b>困ったとき</b><br>
+    ・合言葉を忘れた → 石島さんに連絡（登録を消してもらうと、同じ名前で登録し直せます）<br>
+    ・問題文が分かりにくい、答えに納得できない → 問題の番号（例：q3-2-b）と一緒に教えてください。直します
+  </div>
+
+  <footer>記帳道場 v2（2026-10）・問題の数字は 2026年10月時点の制度にもとづく</footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+try { new QRCode(document.getElementById("qr"), { text: "https://livemissionjapan.github.io/mf-kicho-dojo/", width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { document.getElementById("qr").textContent = ""; }
+</script>
+</body>
+</html>

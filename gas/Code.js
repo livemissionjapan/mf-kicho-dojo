@@ -233,6 +233,9 @@ function setupDashboard() {
   d.getRange("B32:B45").setNumberFormat("0%"); d.getRange("C32:C45").setNumberFormat("yyyy/mm/dd hh:mm");
   d.getRange("E1").setValue("「むずかしかった」が多い問題（問題ID・回数）");
   d.getRange("E3").setFormula('=IFERROR(QUERY(FLATTEN(ARRAYFORMULA(IF(\'進捗ログ\'!N2:N="", "", SPLIT(\'進捗ログ\'!N2:N, ";")))), "select Col1, count(Col1) where Col1 <> \'\' group by Col1 order by count(Col1) desc label Col1 \'問題ID\', count(Col1) \'回数\'", 0), "")');
+  d.getRange("E20").setValue("記帳代行 独り立ち（卒業試験 90%以上）");
+  d.getRange("E22").setFormula('=IFERROR(QUERY(\'進捗ログ\'!A2:R, "select B, max(J), max(A) where F = \'exam\' and K = \'クリア\' group by B label B \'受講者\', max(J) \'正答率\', max(A) \'合格日\'", 0), "まだいません")');
+  d.getRange("F22:F29").setNumberFormat("0%"); d.getRange("G22:G29").setNumberFormat("yyyy/mm/dd hh:mm");
   d.getRange("E30").setValue("ステージ別の平均正答率（全員・全回）");
   d.getRange("E32").setFormula('=IFERROR(QUERY(\'進捗ログ\'!A2:R, "select F, G, avg(J), count(J) where F <> \'diag\' group by F, G order by avg(J) label F \'ステージ\', G \'名前\', avg(J) \'平均正答率\', count(J) \'回数\'", 0), "")');
   d.getRange("G32:G80").setNumberFormat("0%");

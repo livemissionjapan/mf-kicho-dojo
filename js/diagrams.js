@@ -467,3 +467,76 @@
 
   window.DIAGRAMS = D;
 })();
+
+/* ---------- S0 連動シミュレーター：取引を選ぶと B/S・P/L・C/F のどこが動くか ---------- */
+(function () {
+  const D = window.DIAGRAMS = window.DIAGRAMS || {};
+  const TX = [
+    { id: "sale", name: "商品を掛けで売る 100（原価60）", apply: s => { s.ar += 100; s.sales += 100; s.inv -= 60; s.cogs += 60; }, moved: "B/S：売掛金↑・商品↓・利益剰余金↑｜P/L：売上↑・原価↑→利益＋40｜C/F：動かない（まだお金は入っていない）" },
+    { id: "collect", name: "売掛金を回収する 100", apply: s => { s.cash += 100; s.ar -= 100; s.cfo += 100; }, moved: "B/S：現金↑・売掛金↓（資産の中身が入れ替わるだけ）｜P/L：動かない｜C/F：営業＋100" },
+    { id: "buy", name: "商品を掛けで仕入れる 60", apply: s => { s.inv += 60; s.ap += 60; }, moved: "B/S：商品↑・買掛金↑（左右が同時に増える）｜P/L：動かない（売れるまで費用にならない）｜C/F：動かない" },
+    { id: "pay", name: "買掛金を支払う 60", apply: s => { s.cash -= 60; s.ap -= 60; s.cfo -= 60; }, moved: "B/S：現金↓・買掛金↓｜P/L：動かない｜C/F：営業−60" },
+    { id: "wage", name: "給与を現金で払う 30", apply: s => { s.cash -= 30; s.exp += 30; s.cfo -= 30; }, moved: "B/S：現金↓・利益剰余金↓｜P/L：費用↑→利益−30｜C/F：営業−30" },
+    { id: "loan", name: "銀行から借りる 200", apply: s => { s.cash += 200; s.loan += 200; s.cff += 200; }, moved: "B/S：現金↑・借入金↑｜P/L：動かない（借入は利益ではない）｜C/F：財務＋200" },
+    { id: "repay", name: "借入を返す 50＋利息2", apply: s => { s.cash -= 52; s.loan -= 50; s.exp += 2; s.cff -= 50; s.cfo -= 2; }, moved: "B/S：現金↓・借入金↓｜P/L：利息2だけ費用（元本は費用ではない）｜C/F：財務−50・営業−2" },
+    { id: "asset", name: "備品を現金で買う 120", apply: s => { s.cash -= 120; s.fa += 120; s.cfi -= 120; }, moved: "B/S：現金↓・備品↑（資産の中身が入れ替わる）｜P/L：動かない（費用にならない）｜C/F：投資−120" },
+    { id: "dep", name: "減価償却する 20", apply: s => { s.dep += 20; s.exp += 20; }, moved: "B/S：備品（純額）↓・利益剰余金↓｜P/L：費用↑→利益−20｜C/F：動かない（お金は出ない費用）" },
+    { id: "advance", name: "前受金を受け取る 30", apply: s => { s.cash += 30; s.adv += 30; s.cfo += 30; }, moved: "B/S：現金↑・前受金↑（まだ売上ではない）｜P/L：動かない｜C/F：営業＋30" },
+    { id: "capital", name: "社長が出資する 100", apply: s => { s.cash += 100; s.cap += 100; s.cff += 100; }, moved: "B/S：現金↑・資本金↑｜P/L：動かない｜C/F：財務＋100" },
+  ];
+  const init0 = () => ({ cash: 100, ar: 0, inv: 60, fa: 0, dep: 0, ap: 0, loan: 0, adv: 0, cap: 160, sales: 0, cogs: 0, exp: 0, cfo: 0, cfi: 0, cff: 0 });
+  const T = (x, y, t, o) => `<text x="${x}" y="${y}" font-size="${(o && o.fs) || 13}" fill="${(o && o.fill) || "var(--d-ink)"}" text-anchor="${(o && o.anchor) || "start"}" font-weight="${(o && o.fw) || 400}" ${o && o.attrs ? o.attrs : ""}>${t}</text>`;
+  const R = (x, y, w, h, o) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${(o && o.fill) || "var(--d-bg)"}" stroke="${(o && o.stroke) || "var(--d-muted)"}" stroke-width="${(o && o.sw) || 1.5}" ${o && o.attrs ? o.attrs : ""}/>`;
+  function row(x, y, w, key, label) {
+    return `<g data-k="${key}">` + R(x, y, w, 26, { attrs: 'class="sim-row"' }) + T(x + 8, y + 18, label, { fs: 12 }) + T(x + w - 8, y + 18, "0", { fs: 13, anchor: "end", fw: 700, attrs: `data-v="${key}"` }) + "</g>";
+  }
+  function panel(x, title, color, rows) {
+    let b = R(x, 18, 220, 330, { stroke: color, sw: 2 }) + T(x + 110, 42, title, { fs: 15, fw: 800, anchor: "middle", fill: color });
+    rows.forEach((r, i) => { if (r.head) b += T(x + 10, 70 + i * 30, r.head, { fs: 11, fill: "var(--d-muted)" }); else b += row(x + 10, 54 + i * 30, 200, r.k, r.l); });
+    return b;
+  }
+  const svg = `<svg id="S0" viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="取引を選ぶとB/S・P/L・C/Fのどこが動くか">
+    <style>#S0 .sim-row{transition:fill .3s}#S0 g.hit rect{fill:var(--d-lit);stroke:var(--d-accent);stroke-width:2.5}#S0 g.hit text{font-weight:800}</style>
+    ${panel(10, "B/S（貸借対照表）", "var(--d-accent)", [
+      { k: "cash", l: "現金" }, { k: "ar", l: "売掛金" }, { k: "inv", l: "商品" }, { k: "fa", l: "備品（純額）" },
+      { k: "ap", l: "買掛金" }, { k: "loan", l: "借入金" }, { k: "adv", l: "前受金" }, { k: "cap", l: "資本金" }, { k: "re", l: "利益剰余金" }, { k: "chk", l: "資産＝負債＋純資産" }
+    ])}
+    ${panel(250, "P/L（損益計算書）", "var(--d-ok)", [
+      { k: "sales", l: "売上高" }, { k: "cogs", l: "売上原価" }, { k: "exp", l: "その他の費用" }, { k: "profit", l: "利益" }
+    ])}
+    ${panel(490, "C/F（キャッシュフロー）", "var(--d-warn)", [
+      { k: "cfo", l: "営業" }, { k: "cfi", l: "投資" }, { k: "cff", l: "財務" }, { k: "cfsum", l: "現金の増減" }, { k: "cashEnd", l: "期末の現金" }
+    ])}
+  </svg>`;
+  const controls = `<div class="d-controls sim-ctl">` + TX.map(t => `<button class="d-btn" type="button" data-tx="${t.id}">${t.name}</button>`).join("") + `<button class="d-btn" type="button" data-tx="reset">はじめから</button></div><div class="d-note sim-note">取引のボタンを押すと、3つの表のどこが動くかが光ります（単位：万円）。</div>`;
+  D.S0 = {
+    title: "連動シミュレーター：取引を選ぶと、どこが動く？",
+    caption: "B/Sは『今の状態』、P/Lは『この期間に増えた利益』、C/Fは『お金の出入り』。1つの取引が3つの表のどこに出るかを体で覚える。",
+    hint: "下のボタンを押すと、動いた行が光り、何が起きたかが出ます",
+    svg, controls,
+    init(root) {
+      let s = init0(), log = [];
+      const val = k => {
+        const re = s.sales - s.cogs - s.exp;
+        const m = { cash: s.cash, ar: s.ar, inv: s.inv, fa: s.fa - s.dep, ap: s.ap, loan: s.loan, adv: s.adv, cap: s.cap, re, sales: s.sales, cogs: s.cogs, exp: s.exp, profit: re, cfo: s.cfo, cfi: s.cfi, cff: s.cff, cfsum: s.cfo + s.cfi + s.cff, cashEnd: s.cash };
+        const assets = m.cash + m.ar + m.inv + m.fa, le = m.ap + m.loan + m.adv + m.cap + m.re;
+        m.chk = assets === le ? `${assets}＝${le} ◯` : `${assets}≠${le}`;
+        return m[k];
+      };
+      const draw = (changed) => {
+        root.querySelectorAll("#S0 [data-v]").forEach(t => { const k = t.getAttribute("data-v"); const v = val(k); t.textContent = typeof v === "number" ? v.toLocaleString("ja-JP") : v; });
+        root.querySelectorAll("#S0 g[data-k]").forEach(g => g.classList.toggle("hit", !!(changed && changed.has(g.getAttribute("data-k")))));
+      };
+      const snap = () => { const o = {}; ["cash", "ar", "inv", "fa", "ap", "loan", "adv", "cap", "re", "sales", "cogs", "exp", "profit", "cfo", "cfi", "cff", "cfsum", "cashEnd", "chk"].forEach(k => o[k] = val(k)); return o; };
+      root.querySelectorAll(".sim-ctl [data-tx]").forEach(b => b.addEventListener("click", () => {
+        const id = b.getAttribute("data-tx"); const note = root.querySelector(".sim-note");
+        if (id === "reset") { s = init0(); log = []; draw(null); note.textContent = "はじめの状態：社長の出資160が、現金100と商品60になっている（資産160＝純資産160）。"; return; }
+        const t = TX.find(x => x.id === id); const before = snap(); t.apply(s); const after = snap();
+        const changed = new Set(Object.keys(after).filter(k => after[k] !== before[k] && k !== "chk"));
+        draw(changed); log.push(t.name);
+        note.innerHTML = `<b>${t.name}</b><br>${t.moved}<br><span style="color:var(--d-muted)">ここまでの取引：${log.length}件。資産＝負債＋純資産は常に一致（${val("chk")}）</span>`;
+      }));
+      draw(null);
+    }
+  };
+})();

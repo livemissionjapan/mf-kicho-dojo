@@ -5,9 +5,11 @@ LOG=_stock/retry_images.log
 while true; do
   node -e '
     global.window={};const fs=require("fs");
-    for (const f of ["a","b","add-1","add-2","add-3","add-4"]) { try { require("./data/questions-"+f+".js"); } catch(e){} }
-    const q=[].concat(window.QUESTIONS_A||[],window.QUESTIONS_B||[],window.QUESTIONS_ADD1||[],window.QUESTIONS_ADD2||[],window.QUESTIONS_ADD3||[],window.QUESTIONS_ADD4||[]);
+    for (const f of ["a","b","add-1","add-2","add-3","add-4","add-5","add-6","add-7","add-8"]) { try { require("./data/questions-"+f+".js"); } catch(e){} }
+    const q=[].concat(window.QUESTIONS_A||[],window.QUESTIONS_B||[],window.QUESTIONS_ADD1||[],window.QUESTIONS_ADD2||[],window.QUESTIONS_ADD3||[],window.QUESTIONS_ADD4||[],window.QUESTIONS_ADD5||[],window.QUESTIONS_ADD6||[],window.QUESTIONS_ADD7||[],window.QUESTIONS_ADD8||[]);
+    require("./data/curriculum.js");const C=window.CURRICULUM;const cov=[{id:C.diagnostic.img,scene:C.diagnostic.scene},{id:C.exam.img,scene:C.exam.scene}];for(const ch of C.chapters){cov.push({id:ch.img,scene:ch.scene});for(const st of ch.stages)cov.push({id:st.img,scene:st.scene});}
     const out=[];
+    for (const c of cov) if (c.scene && !fs.existsSync("img/"+c.id+".jpg")) out.push(c);
     for (const x of q) { const id=x.img||x.id;
       if (!fs.existsSync("img/"+id+".jpg") && x.scene) out.push({id, scene:x.scene});
       if (!fs.existsSync("img/e-"+id+".jpg") && x.explainScene && x.type!=="journal") out.push({id:"e-"+id, scene:x.explainScene});

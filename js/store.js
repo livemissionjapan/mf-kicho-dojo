@@ -32,7 +32,7 @@ window.Store = (function () {
   }
   function setUser(name, pin) {
     const s = load();
-    if (s.name && (s.name !== name.trim() || s.pin !== pin)) { // 別の人に切り替え：この端末の記録は初期化（未送信分は捨てない）
+    if (s.name && s.name !== name.trim()) { // 別の人に切り替え：この端末の記録は初期化（未送信分は捨てない）。同じ人ならパスの確かめはサーバー側
       const q = s.queue; state = empty(); state.deviceId = s.deviceId; state.queue = q;
     }
     state.name = name.trim(); state.pin = pin; save();
@@ -58,8 +58,9 @@ window.Store = (function () {
     (remote.hard || []).forEach(q => { if (!s.hard.includes(q)) s.hard.push(q); });
     save();
   }
+  function logout() { const s = load(); s.pin = ""; save(); } // 名前と記録は残す（同じ人が入り直せば続きから）
   function reset() { state = empty(); state.deviceId = uuid(); save(); }
   function takeQueue() { return load().queue.slice(); }
   function dropFromQueue(ids) { const s = load(); s.queue = s.queue.filter(l => !ids.includes(l.logId)); save(); }
-  return { load, save, setUser, stage, recordStage, recordDiag, toggleHard, isHard, merge, reset, takeQueue, dropFromQueue, uuid };
+  return { load, save, setUser, stage, recordStage, recordDiag, toggleHard, isHard, merge, reset, logout, takeQueue, dropFromQueue, uuid };
 })();

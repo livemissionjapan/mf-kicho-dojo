@@ -461,14 +461,21 @@
     $("#name-msg").textContent = "";
     window.Finance.renderTrack(); Sheet.flush().then(renderHomeQuiet);
   });
-  $("#who-change").addEventListener("click", () => { const s = Store.load(); $("#name-input").value = ""; $("#pin-input").value = ""; $("#name-msg").textContent = ""; show("name"); });
+  $("#who-change").addEventListener("click", () => { Store.logout(); $("#who-name").textContent = ""; $("#name-input").value = ""; $("#pin-input").value = ""; $("#name-msg").textContent = ""; show("name"); });
   document.querySelectorAll("[data-go=home]").forEach(b => b.addEventListener("click", () => renderHome()));
   $("#st-back").addEventListener("click", () => current && (current.kind === "diag" || current.kind === "exam") ? renderHome("keiri") : openChapter(current.chapter.id));
   $("#r-resend").addEventListener("click", async () => { const r = await Sheet.flush(); toast(r.sent ? `${r.sent}件を送信しました` : "送信できませんでした"); renderHomeQuiet(); });
   function renderHomeQuiet() { const s = Store.load(); const n = $("#queue-note"); if (n) n.textContent = s.queue.length ? `未送信の記録 ${s.queue.length} 件` : ""; }
 
+  /* 1問を指定して開く（テストと管理者の確認用） */
+  function showQuestion(id) {
+    const q = qById[id]; if (!q) return false;
+    if (q.stage === "diag") startDiag(); else if (q.stage === C.exam.id) startExam(); else startStage(q.stage);
+    current.qs = [q].concat(current.qs.filter(x => x !== q)); current.i = 0; renderQuestion(); return true;
+  }
+
   /* 検証用フック */
-  window.KichoDojo = { startStage, startDiag, startExam, openChapter, renderDiagram, renderHome, setCrumb, chaptersOf, trackOf, get current() { return current; }, stagesFlat, qByStage, Q };
+  window.KichoDojo = { showQuestion, startStage, startDiag, startExam, openChapter, renderDiagram, renderHome, setCrumb, chaptersOf, trackOf, get current() { return current; }, stagesFlat, qByStage, Q };
 
   /* ---------- 起動 ---------- */
   $("#ver").textContent = "版 " + C.version + "・問題 " + Q.length + "問";

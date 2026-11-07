@@ -370,3 +370,18 @@ dialog#lens-dialog > .btn{margin:14px 18px 0}
 .adm-check{display:flex;gap:8px;align-items:center;font-weight:700}
 @media (max-width:560px){ .adm-grid2{grid-template-columns:minmax(0,1fr)} .adm-line,.adm-ch{grid-template-columns:minmax(0,1fr)} }
 .adm-pre{white-space:pre-wrap;word-break:break-all;font:inherit;font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0;user-select:all}
+/* スマホで押しやすく（高さ36px以上） */
+header.top .brand{min-height:40px}
+header.top .who button{min-height:36px;padding:6px 12px}
+.foot-admin{min-height:36px;padding:8px 12px}
+details.dia summary{min-height:40px}
+header.top .brand{white-space:nowrap;flex:none}
+header.top .who{min-width:0}
+header.top .who #who-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46vw}
+header.top .who button{white-space:nowrap;flex:none}
+.chipf{min-height:36px}
+@media (max-width:420px){header.top .who #who-name{max-width:34vw;font-size:12px}}
+.fin-nav a, .fin-toc a{display:inline-flex;align-items:center;min-height:36px}
+.adm-table button.link{min-height:32px}
+.adm-check{display:flex;align-items:center;gap:8px;min-height:40px}
+.adm-check input{width:22px;height:22px}

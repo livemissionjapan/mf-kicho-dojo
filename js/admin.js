@@ -283,7 +283,7 @@
       </tbody></table></div>
       <form id="ad-add" class="adm-form" style="margin-top:10px"><input class="text" id="ad-id" type="email" placeholder="新しい管理者ID（メールアドレス）" autocomplete="off" autocapitalize="off" required><input class="text" id="ad-pass" type="password" placeholder="仮パスワード（8文字以上）" autocomplete="new-password" minlength="8" required><button class="btn" type="submit">管理者を追加</button></form>
       <p class="muted" style="font-size:12px">追加した人・再設定した人は、初回ログインで自分のパスワードに変えるまで中を見られません。</p><div class="adm-msg" id="ad-msg"></div></div>
-      <div class="card"><h2>元データ</h2><p class="muted">進捗はスプレッドシートの「進捗ログ」が正本です。${D.sheetUrl ? `<a href="${esc(D.sheetUrl)}" target="_blank" rel="noopener">スプレッドシートを開く</a>` : ""}</p></div>`;
+      <div class="card"><h2>元データ</h2><p class="muted">進捗はスプレッドシートの「進捗ログ」が正本です。${D.sheetUrl ? `<a class="btn secondary" style="margin-top:6px" href="${esc(D.sheetUrl)}" target="_blank" rel="noopener">スプレッドシートを開く</a>` : ""}</p></div>`;
     $("#st-self").onchange = async e => { const j = await api("setSetting", { selfRegister: e.target.checked }); if (!j.ok) { toast(err(j)); e.target.checked = !e.target.checked; return; } D.settings = j.settings; toast(j.settings.selfRegister ? "自分で登録できるようにしました" : "管理者が追加した人だけにしました"); };
     $("#ad-mine").onclick = () => renderChangePass(false);
     $("#ad-add").onsubmit = async e => { e.preventDefault(); const j = await api("adminAdd", { id: $("#ad-id").value.trim(), pass: $("#ad-pass").value }); if (!j.ok) { $("#ad-msg").textContent = err(j); return; } toast("管理者を追加しました"); await load(); tab = "settings"; render(); };

@@ -3,7 +3,7 @@
   "private": true,
   "description": "記帳道場 — テストだけのための package.json（本体はビルドなしの静的サイト）",
   "scripts": {
-    "test": "node --test --test-concurrency=1 tests/",
+    "test": "node --test --test-concurrency=1 \"tests/*.test.js\"",
     "test:data": "node --test tests/data.test.js tests/images.test.js tests/gas.test.js",
     "test:ui": "node --test tests/ui.test.js"
   },

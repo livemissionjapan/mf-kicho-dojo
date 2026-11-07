@@ -12,9 +12,9 @@
 
   /* ---------- 入口 ---------- */
   function renderTrack() {
-    const name = (window.Store && Store.load().name) || "";
-    $("#who-name").textContent = name;
-    $("#track-hello").textContent = name ? `${name}さん、今日はどちらを学びますか？` : "今日はどちらを学びますか？";
+    const st0 = window.Store ? Store.load() : {}; const name = st0.display || (st0.name && !st0.name.includes("@") ? st0.name : "") || "";
+    $("#who-name").textContent = st0.display || st0.name || "";
+    $("#track-hello").textContent = name ? `${name}さん、今日はどれを学びますか？` : "今日はどれを学びますか？";
     show("track");
   }
 
@@ -120,8 +120,9 @@
   }
 
   /* ---------- つなぎ込み ---------- */
-  $("#go-keiri").addEventListener("click", () => window.KichoDojo.renderHome());
+  $("#go-keiri").addEventListener("click", () => window.KichoDojo.renderHome("keiri"));
   $("#go-zaimu").addEventListener("click", () => { tag = ""; renderFinance(); });
+  const gi = $("#go-inshoku"); if (gi) gi.addEventListener("click", () => window.KichoDojo.renderHome("inshoku"));
   document.querySelectorAll("[data-go=track]").forEach(b => b.addEventListener("click", renderTrack));
   $("#lens-dialog").addEventListener("click", e => { if (e.target.id === "lens-dialog") e.target.close(); });
 

@@ -14,7 +14,7 @@
 <div class="app">
   <header class="top">
     <button class="brand" data-go="track" type="button"><span class="mark">帳</span>記帳道場</button>
-    <div class="who"><span id="who-name"></span><button id="who-change" type="button">名前・合言葉</button></div>
+    <div class="who"><span id="who-name"></span><button id="who-change" type="button">ログアウト</button></div>
   </header>
   <nav class="crumb" id="crumb" aria-label="現在地"></nav>
 
@@ -24,11 +24,11 @@
       <h1>記帳道場へようこそ</h1>
       <p class="muted">経理の実務で迷うところを、場面から考えて身につけます。まず20問の実力診断で得意・苦手を見える化し、8つの章で学びます。</p>
       <form id="name-form" style="margin-top:12px">
-        <label class="lbl" for="name-input">お名前</label>
-        <input class="text" id="name-input" placeholder="例：山田 花子" autocomplete="name" required>
-        <label class="lbl" for="pin-input" style="margin-top:10px">合言葉（数字4桁・自分で決める）</label>
-        <input class="text" id="pin-input" placeholder="例：2468" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="off" required>
-        <p class="muted" style="font-size:13px">別の端末でも、同じ名前と合言葉を入れると続きから始められます。</p>
+        <label class="lbl" for="name-input">ID（メールアドレス）</label>
+        <input class="text" id="name-input" placeholder="例：hanako@example.com" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="username" required>
+        <label class="lbl" for="pin-input" style="margin-top:10px">パス</label>
+        <input class="text" id="pin-input" type="password" placeholder="例：2468" minlength="4" maxlength="32" autocomplete="current-password" required>
+        <p class="muted" style="font-size:13px">IDとパスは管理者から受け取ったものを入れてください。別の端末でも、同じIDとパスで続きから始められます。</p>
         <div class="muted" id="name-msg" style="min-height:1.4em;color:var(--ng)"></div>
         <button class="btn block" id="name-go" type="submit">はじめる</button>
       </form>
@@ -38,8 +38,8 @@
   <!-- 入口：経理を学ぶ／財務を学ぶ -->
   <section id="track" class="view">
     <div class="card">
-      <h1 id="track-hello">今日はどちらを学びますか？</h1>
-      <p class="muted">経理は「日々の仕訳を正しく」、財務は「その数字で会社をどう動かすか」。</p>
+      <h1 id="track-hello">今日はどれを学びますか？</h1>
+      <p class="muted">経理は「日々の仕訳を正しく」、財務は「その数字で会社をどう動かすか」、飲食店の数字は「お店の数字を読んで打ち手につなげる」。</p>
     </div>
     <div class="tracks">
       <button class="track-card" id="go-keiri" type="button">
@@ -49,6 +49,10 @@
       <button class="track-card zaimu" id="go-zaimu" type="button">
         <img src="img/t-zaimu.jpg" alt="" onerror="this.classList.add('noimg')">
         <span class="track-tx"><span class="track-tag">財務</span><b>財務を学ぶ</b><span class="muted">財務アドバイザー・カルロさんの頭の中。視点・思考回路・知識カードで、数字の使い方を盗む</span><span class="track-go">財務の部屋へ →</span></span>
+      </button>
+      <button class="track-card inshoku" id="go-inshoku" type="button">
+        <img src="img/t-inshoku.jpg" alt="" onerror="this.classList.add('noimg')">
+        <span class="track-tx"><span class="track-tag">飲食店</span><b>飲食店の数字を学ぶ</b><span class="muted">客数×客単価・原価率・人件費・FL・損益分岐点・資金繰り・月次報告。飲食店専門の経理代行として、お店の数字を読み、社長と話せるようになる</span><span class="track-go">飲食店の道へ →</span></span>
       </button>
     </div>
   </section>
@@ -64,7 +68,7 @@
     <div class="row" style="margin:8px 0"><button class="btn secondary" data-go="track" type="button">← 入口</button></div>
     <div class="card hero">
       <svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle class="track" cx="50" cy="50" r="42"/><circle class="bar" id="ring-bar" cx="50" cy="50" r="42"/><text id="ring-text" x="50" y="57" text-anchor="middle">0%</text></svg>
-      <div><h1 style="margin:0">ワールドマップ</h1><div class="muted" id="home-sub"></div><div class="muted" id="hard-note" style="font-size:13px"></div><div class="muted" id="queue-note" style="font-size:12px"></div></div>
+      <div><h1 style="margin:0" id="home-title">ワールドマップ</h1><div class="muted" id="home-intro" style="font-size:13px"></div><div class="muted" id="home-sub"></div><div class="muted" id="hard-note" style="font-size:13px"></div><div class="muted" id="queue-note" style="font-size:12px"></div></div>
     </div>
     <div class="card" id="diag-card"></div>
     <div class="map" id="map"></div>
@@ -119,7 +123,10 @@
     </div>
   </section>
 
-  <footer><span id="ver"></span>　問題の数字は 2026年10月時点の制度にもとづく</footer>
+  <!-- 管理者ページ（js/admin.js） -->
+  <section id="admin" class="view"><div id="admin-box"></div></section>
+
+  <footer><span id="ver"></span>　問題の数字は 2026年10月時点の制度にもとづく　<button class="foot-admin" id="admin-open" type="button">🔒 管理者</button></footer>
 </div>
 <div class="toast" id="toast"></div>
 <dialog id="lens-dialog"><div id="lens-body"></div><button class="btn secondary" type="button" onclick="this.closest('dialog').close()">閉じる</button></dialog>
@@ -136,11 +143,13 @@
 <script src="data/questions-add-6.js"></script>
 <script src="data/questions-add-7.js"></script>
 <script src="data/questions-add-8.js"></script>
+<script src="data/inshoku.js"></script>
 <script src="js/diagrams.js"></script>
 <script src="js/store.js"></script>
 <script src="js/sheet.js"></script>
 <script src="data/finance.js"></script>
 <script src="js/finance.js"></script>
 <script src="js/app.js"></script>
+<script src="js/admin.js"></script>
 </body>
 </html>

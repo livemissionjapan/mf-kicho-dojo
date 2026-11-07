@@ -1,18 +1,25 @@
 /* 記帳道場 v2 — 画面の進行・出題・採点・診断・進捗 */
 (function () {
   const C = window.CURRICULUM;
-  const Q = [].concat(window.QUESTIONS_A || [], window.QUESTIONS_B || [], window.QUESTIONS_ADD1 || [], window.QUESTIONS_ADD2 || [], window.QUESTIONS_ADD3 || [], window.QUESTIONS_ADD4 || [], window.QUESTIONS_ADD5 || [], window.QUESTIONS_ADD6 || [], window.QUESTIONS_ADD7 || [], window.QUESTIONS_ADD8 || [], window.QUESTIONS || []);
+  const Q = [].concat(window.QUESTIONS_A || [], window.QUESTIONS_B || [], window.QUESTIONS_ADD1 || [], window.QUESTIONS_ADD2 || [], window.QUESTIONS_ADD3 || [], window.QUESTIONS_ADD4 || [], window.QUESTIONS_ADD5 || [], window.QUESTIONS_ADD6 || [], window.QUESTIONS_ADD7 || [], window.QUESTIONS_ADD8 || [], window.QUESTIONS_INSHOKU || [], window.QUESTIONS || []);
   const D = window.DIAGRAMS || {};
   const $ = (s, r) => (r || document).querySelector(s);
   const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const pic = (id, cls) => id ? `<img class="pic ${cls || ""}" src="img/${esc(id)}.jpg" alt="" loading="lazy" onerror="this.remove()">` : "";
   const expHtml = t => String(t || "").split(/\n+/).map(p => "<p>" + esc(p) + "</p>").join("");
-  const fieldOf = id => C.fields.find(f => f.id === id);
-  const chapterOfField = fid => C.chapters.find(c => c.field === fid);
+  /* 道（トラック）：経理＝C.chapters、飲食店の数字＝window.INSHOKU.chapters（track:"inshoku"）。財務は js/finance.js */
+  const INS = window.INSHOKU || { chapters: [], fields: [] };
+  const ALLCH = C.chapters.concat(INS.chapters || []);
+  const trackOf = ch => ch.track || "keiri";
+  const TRACK_NAME = { keiri: "経理の道", inshoku: (INS.name || "飲食店の数字") + "の道" };
+  const chaptersOf = t => ALLCH.filter(c => trackOf(c) === t);
+  let homeTrack = "keiri";
+  const fieldOf = id => C.fields.find(f => f.id === id) || (INS.fields || []).find(f => f.id === id);
+  const chapterOfField = fid => ALLCH.find(c => c.field === fid);
 
   const stagesFlat = [];
-  C.chapters.forEach(ch => ch.stages.forEach(st => stagesFlat.push({ ...st, chapter: ch })));
+  ALLCH.forEach(ch => ch.stages.forEach(st => stagesFlat.push({ ...st, chapter: ch })));
   const qByStage = {};
   Q.forEach(q => { (qByStage[q.stage] = qByStage[q.stage] || []).push(q); });
   const qById = {}; Q.forEach(q => qById[q.id] = q);
@@ -24,7 +31,8 @@
     return i === 0 || isCleared(st.chapter.stages[i - 1].id);
   }
   const chapterDone = ch => ch.stages.every(s => isCleared(s.id));
-  const overallRate = () => stagesFlat.filter(s => isCleared(s.id)).length / stagesFlat.length;
+  const trackStages = t => stagesFlat.filter(s => trackOf(s.chapter) === t);
+  const overallRate = t => { const l = trackStages(t); return l.length ? l.filter(s => isCleared(s.id)).length / l.length : 0; };
 
   /* ---------- 共通UI ---------- */
   function show(id) { document.querySelectorAll(".view").forEach(v => v.classList.remove("active")); $("#" + id).classList.add("active"); window.scrollTo({ top: 0 }); setCrumb(id); }
@@ -32,10 +40,11 @@
   function setCrumb(view) {
     const parts = [];
     const top = { label: "入口（トップ）", go: () => window.Finance && window.Finance.renderTrack() };
-    const keiri = { label: "経理の道", go: renderHome };
+    const chTrack = (current && current.chapterView && (view === "chapter")) ? trackOf(current.chapterView) : (current && current.chapter ? trackOf(current.chapter) : homeTrack);
+    const keiri = { label: TRACK_NAME[chTrack] || "経理の道", go: () => renderHome(chTrack) };
     if (view === "name") parts.push({ label: "はじめに" });
     else if (view === "track") parts.push({ label: "入口（トップ）", here: true });
-    else if (view === "home") parts.push(top, { label: "経理の道 ワールドマップ", here: true });
+    else if (view === "home") parts.push(top, { label: TRACK_NAME[homeTrack] + " ワールドマップ", here: true });
     else if (view === "hard") parts.push(top, keiri, { label: "むずかしかった問題", here: true });
     else if (view === "finance") parts.push(top, { label: "財務の部屋", here: true });
     else if (view === "chapter" && current && current.chapterView) parts.push(top, keiri, { label: `第${current.chapterView.no}章 ${current.chapterView.name}`, here: true });
@@ -105,15 +114,23 @@
   }
 
   /* ---------- ホーム ---------- */
-  function renderHome() {
+  function renderHome(t) {
+    if (typeof t === "string") homeTrack = t;
+    const isK = homeTrack === "keiri";
+    const CH = chaptersOf(homeTrack);
     const s = Store.load();
-    $("#who-name").textContent = s.name;
-    const rate = overallRate();
+    $("#who-name").textContent = s.display || s.name;
+    $("#home-title").textContent = isK ? "ワールドマップ" : TRACK_NAME[homeTrack];
+    $("#home-intro").textContent = isK ? "" : (INS.intro || "");
+    $("#diag-card").style.display = isK ? "" : "none";
+    $("#exam-card").style.display = isK ? "" : "none";
+    const rate = overallRate(homeTrack);
     const bar = $("#ring-bar"); const len = 2 * Math.PI * 42;
     bar.style.strokeDasharray = len; bar.style.strokeDashoffset = len * (1 - rate);
     $("#ring-text").textContent = Math.round(rate * 100) + "%";
-    const clearedN = stagesFlat.filter(st => isCleared(st.id)).length;
-    $("#home-sub").textContent = `クリア ${clearedN} / ${stagesFlat.length} ステージ・バッジ ${C.chapters.filter(chapterDone).length} / ${C.chapters.length}`;
+    const TS = trackStages(homeTrack);
+    const clearedN = TS.filter(st => isCleared(st.id)).length;
+    $("#home-sub").textContent = `クリア ${clearedN} / ${TS.length} ステージ・バッジ ${CH.filter(chapterDone).length} / ${CH.length}`;
     // 実力診断
     const dg = $("#diag-card"); const diagQs = qByStage.diag || [];
     if (!s.diag) {
@@ -129,7 +146,7 @@
     dg.querySelectorAll("[data-ch]").forEach(n => { n.addEventListener("click", () => openChapter(n.dataset.ch)); n.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") openChapter(n.dataset.ch); }); });
     // 章の地図
     const map = $("#map"); map.innerHTML = "";
-    C.chapters.forEach(ch => {
+    CH.forEach(ch => {
       const done = chapterDone(ch);
       const w = el("div", "world" + (done ? " done" : ""));
       w.innerHTML = `${pic(ch.img, "thumb")}<div class="no">${done ? "✓" : ch.no}</div>
@@ -165,7 +182,7 @@
     const box = $("#hard-box");
     box.innerHTML = `<div class="row"><h2 style="margin:0">むずかしかった問題</h2><span class="sp"></span><button class="btn secondary" data-go="home" type="button">← マップ</button></div>` +
       (items.length ? items.map(q => { const st = stagesFlat.find(x => x.id === q.stage); return `<div class="card hard-item"><div class="muted">${st ? `第${st.chapter.no}章 ${esc(st.name)}` : (q.stage === "exam" ? "卒業試験" : "実力診断")}・${esc(fieldOf(q.field) ? fieldOf(q.field).name : "")}</div><div class="stem" style="font-size:15px">${esc(q.stem)}</div><div class="muted exp">${expHtml(q.explanation)}</div><div class="row" style="margin-top:6px"><button class="d-btn" data-unhard="${esc(q.id)}" type="button">印を外す</button>${st ? `<button class="d-btn" data-stage="${esc(st.id)}" type="button">このステージをやり直す</button>` : ""}</div></div>`; }).join("") : "<p class='muted'>まだありません</p>");
-    box.querySelectorAll("[data-go=home]").forEach(b => b.addEventListener("click", renderHome));
+    box.querySelectorAll("[data-go=home]").forEach(b => b.addEventListener("click", () => renderHome()));
     box.querySelectorAll("[data-unhard]").forEach(b => b.addEventListener("click", () => { Store.toggleHard(b.dataset.unhard, false); showHardList(); }));
     box.querySelectorAll("[data-stage]").forEach(b => b.addEventListener("click", () => startStage(b.dataset.stage)));
     show("hard");
@@ -174,7 +191,8 @@
   /* ---------- 章 ---------- */
   let current = null;
   function openChapter(chId) {
-    const ch = C.chapters.find(c => c.id === chId);
+    const ch = ALLCH.find(c => c.id === chId);
+    homeTrack = trackOf(ch);
     current = Object.assign(current || {}, { chapterView: ch });
     $("#ch-title").textContent = `第${ch.no}章　${ch.name}`;
     $("#ch-sub").textContent = ch.sub;
@@ -406,7 +424,8 @@
       if (current.wrong.length) r.weak.innerHTML = "<div class='muted'>間違えた問題</div>" + current.wrong.map(q => `<div class="miss">${esc(q.stem)}</div>`).join("");
       else r.weak.innerHTML = "<div class='muted'>全問正解</div>";
       if (cleared && !wasDone && chapterDone(st.chapter)) r.badge.innerHTML = `<div class="fb good"><div class="ttl">🏅 第${st.chapter.no}章「${esc(st.chapter.name)}」のバッジを獲得</div></div>`;
-      const nx = stagesFlat[stagesFlat.findIndex(x => x.id === st.id) + 1];
+      let nx = stagesFlat[stagesFlat.findIndex(x => x.id === st.id) + 1];
+      if (nx && trackOf(nx.chapter) !== trackOf(st.chapter)) nx = null;
       if (cleared && nx) { next = nx.chapter.id === st.chapter.id ? { stage: nx } : { chapter: nx.chapter }; $("#r-next").textContent = nx.chapter.id === st.chapter.id ? "次のステージへ →" : `第${nx.chapter.no}章へ →`; }
       stageForRetry = st; $("#r-retry").style.display = "";
     }
@@ -414,39 +433,42 @@
     $("#r-next").style.display = next ? "" : "none";
     $("#r-next").onclick = () => next.stage ? startStage(next.stage.id) : openChapter(next.chapter.id);
     if (current.kind !== "exam") $("#r-retry").onclick = () => stageForRetry && startStage(stageForRetry.id);
-    $("#r-chapter").onclick = () => (current.kind === "diag" || current.kind === "exam") ? renderHome() : openChapter(current.chapter.id);
+    $("#r-chapter").onclick = () => (current.kind === "diag" || current.kind === "exam") ? renderHome("keiri") : openChapter(current.chapter.id);
     $("#r-chapter").textContent = (current.kind === "diag" || current.kind === "exam") ? "マップへ" : "章に戻る";
     $("#r-send").textContent = Sheet.enabled ? "送信中…" : "（記録先の設定なし・この端末にのみ保存）";
     show("result");
     if (cleared) confetti();
     const res = await Sheet.flush();
-    $("#r-send").textContent = !Sheet.enabled ? "（記録先の設定なし・この端末にのみ保存）" : res.sent ? `記録しました（${res.sent}件）` : res.pin ? "合言葉が違うため記録できません。名前から入り直してください" : "記録を送信できませんでした。次回起動時に再送します";
+    $("#r-send").textContent = !Sheet.enabled ? "（記録先の設定なし・この端末にのみ保存）" : res.sent ? `記録しました（${res.sent}件）` : res.pin ? "合言葉が違うか、IDが使えない設定のため記録できません。名前から入り直してください" : "記録を送信できませんでした。次回起動時に再送します";
   }
 
   /* ---------- 名前・合言葉 ---------- */
   $("#name-form").addEventListener("submit", async e => {
     e.preventDefault();
-    const name = $("#name-input").value.trim(), pin = $("#pin-input").value.trim();
-    if (!name) return; if (!/^\d{4}$/.test(pin)) { $("#name-msg").textContent = "合言葉は数字4桁で入れてください"; return; }
+    let name = $("#name-input").value.trim(); const pin = $("#pin-input").value.trim();
+    if (name.includes("@")) name = name.toLowerCase();
+    if (!name) return; if (pin.length < 4) { $("#name-msg").textContent = "パスは4文字以上です"; return; }
     const btn = $("#name-go"); btn.disabled = true; $("#name-msg").textContent = "記録を確認しています…";
     const res = await Sheet.restore(name, pin, Store.load().deviceId);
     btn.disabled = false;
-    if (res.error === "pin") { $("#name-msg").textContent = "合言葉が違います。前に決めた4桁を入れてください（忘れたときは石島さんへ）"; return; }
-    Store.setUser(name, pin);
+    if (res.error === "pin") { $("#name-msg").textContent = "パスが違います（忘れたときは管理者へ）"; return; }
+    if (res.error === "stopped") { $("#name-msg").textContent = "このIDは今使えない設定になっています。石島さんに確認してください"; return; }
+    if (res.error === "unknown") { $("#name-msg").textContent = "このIDは登録されていません。管理者から受け取ったメールアドレスを入れてください"; return; }
+    Store.setUser(name, pin); if (res.display) { const st = Store.load(); st.display = res.display; Store.save(); }
     if (res.error === "offline") { $("#name-msg").textContent = ""; toast("通信できないので、この端末の記録だけで始めます"); }
     else if (res.ok && !res.new) { Store.merge(res); const n = Object.keys(res.stages || {}).length; toast(n ? `おかえりなさい。${n}ステージ分の記録を読み込みました` : "おかえりなさい"); }
-    else toast("はじめまして。この名前と合言葉で記録します");
+    else toast("はじめまして。このIDで記録します");
     $("#name-msg").textContent = "";
     window.Finance.renderTrack(); Sheet.flush().then(renderHomeQuiet);
   });
-  $("#who-change").addEventListener("click", () => { const s = Store.load(); $("#name-input").value = s.name; $("#pin-input").value = ""; $("#name-msg").textContent = ""; show("name"); });
-  document.querySelectorAll("[data-go=home]").forEach(b => b.addEventListener("click", renderHome));
-  $("#st-back").addEventListener("click", () => current && (current.kind === "diag" || current.kind === "exam") ? renderHome() : openChapter(current.chapter.id));
+  $("#who-change").addEventListener("click", () => { const s = Store.load(); $("#name-input").value = ""; $("#pin-input").value = ""; $("#name-msg").textContent = ""; show("name"); });
+  document.querySelectorAll("[data-go=home]").forEach(b => b.addEventListener("click", () => renderHome()));
+  $("#st-back").addEventListener("click", () => current && (current.kind === "diag" || current.kind === "exam") ? renderHome("keiri") : openChapter(current.chapter.id));
   $("#r-resend").addEventListener("click", async () => { const r = await Sheet.flush(); toast(r.sent ? `${r.sent}件を送信しました` : "送信できませんでした"); renderHomeQuiet(); });
   function renderHomeQuiet() { const s = Store.load(); const n = $("#queue-note"); if (n) n.textContent = s.queue.length ? `未送信の記録 ${s.queue.length} 件` : ""; }
 
   /* 検証用フック */
-  window.KichoDojo = { startStage, startDiag, startExam, openChapter, renderDiagram, renderHome, setCrumb, get current() { return current; }, stagesFlat, qByStage, Q };
+  window.KichoDojo = { startStage, startDiag, startExam, openChapter, renderDiagram, renderHome, setCrumb, chaptersOf, trackOf, get current() { return current; }, stagesFlat, qByStage, Q };
 
   /* ---------- 起動 ---------- */
   $("#ver").textContent = "版 " + C.version + "・問題 " + Q.length + "問";

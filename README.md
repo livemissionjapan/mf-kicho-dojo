@@ -20,7 +20,7 @@ v1（2026-10-15、記帳エンジンの監査ルールを元にした7章版）�
 | `js/sheet.js` | GAS との通信（`restore` で名前＋合言葉の記録を取得、POST は no-cors、`ack` で受領確認） |
 | `js/diagrams.js` | 図解10枚（インラインSVG＋操作）。`data-link` が同じ要素は一緒に光る |
 | `data/curriculum.js` | 分野・実力診断・章・ステージ・図解と画像の対応。問題タイプの契約と画像の共通スタイルもここ |
-| `data/questions-a.js` / `questions-b.js` / `questions-add-1〜4.js` | 問題バンク（a：診断＋1〜3章の a〜c、b：4〜8章の a〜c、add-1〜4：各ステージの d〜j）。2026-10-27 から各ステージ10問・合計300問。各問に `field`・`scene`・`explainScene`・`source` |
+| `data/questions-a.js` / `questions-b.js` / `questions-add-*.js` | 問題バンク。現行の読込対象・順序は `index.html`、出題への集約は `js/app.js` を参照。各問の形式は `data/curriculum.js` の契約に従う |
 | `img/<id>.jpg` | 画像（章 `c1`…、ステージ `s1-1`…、問題 `q1-1-a`…、診断 `diag`）。`scripts/gen_images.py` で生成 |
 | `gas/Code.js` | doPost（受講者の合言葉を確かめて進捗ログに追記・logId で二重防止）／doGet（restore・ack・ping・setup） |
 
@@ -64,11 +64,27 @@ v1（2026-10-15、記帳エンジンの監査ルールを元にした7章版）�
 ## 更新手順
 
 ### 問題を足す・直す
-1. `data/questions-a.js`（診断＋1〜3章）か `questions-b.js`（4〜8章）に追記（`stage`・`type`・`field`・`scene`・`source` は `data/curriculum.js` の契約どおり）
-2. 検証：`node -e 'global.window={};require("./data/curriculum.js");require("./data/questions-a.js");require("./data/questions-b.js");console.log(window.QUESTIONS_A.length+window.QUESTIONS_B.length)'`
+1. 対象の問題ID・ステージを持つ `data/questions-a.js`・`questions-b.js`・`questions-add-*.js` を編集する（形式は `data/curriculum.js` の契約どおり）。新しい問題ファイルを作る場合は `index.html` の読込と `js/app.js` の問題バンク集約にも追加する。
+2. プロジェクト直下で、画面と同じ読込順の全問題バンク・問題IDの欠落／重複を確認する：
+
+   ```bash
+   node <<'NODE'
+   const fs = require('node:fs'), vm = require('node:vm');
+   const context = vm.createContext({ window: {} });
+   const html = fs.readFileSync('index.html', 'utf8');
+   const files = [...html.matchAll(/<script\b[^>]*\bsrc=["'](data\/(?:curriculum|questions[^/"']*)\.js)["']/g)].map(m => m[1]);
+   if (!files.some(f => f.startsWith('data/questions'))) throw new Error('問題ファイルが見つかりません');
+   for (const file of files) vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file, timeout: 1000 });
+   const banks = Object.entries(context.window).filter(([key, value]) => /^QUESTIONS(?:_|$)/.test(key) && Array.isArray(value));
+   const questions = banks.flatMap(([, bank]) => bank);
+   if (!questions.length || questions.some(q => !q.id) || new Set(questions.map(q => q.id)).size !== questions.length) throw new Error('問題IDの欠落・重複、または問題数0');
+   console.log(JSON.stringify({ questionFiles: files.filter(f => f.startsWith('data/questions')).length, banks: banks.length, questions: questions.length }));
+   NODE
+   ```
+
 3. 画像を足す：`python3 scripts/gen_images.py --only <問題id> --from-questions`（下の「画像の作り方」）
-3. ブラウザで `index.html` を開いて該当ステージを解く
-4. `git commit` → `git push origin main`（数十秒で公開に反映）
+4. ブラウザで `index.html` を開いて該当ステージを解く
+5. `git commit` → `git push origin main`（数十秒で公開に反映）
 
 ステージの問題数を増やしても、クリア条件（正答率）はそのまま効く。問題バンクの版を上げるときは `data/curriculum.js` の `version` も上げる（結果画面とログに出る）。
 
@@ -140,3 +156,18 @@ python3 scripts/gen_images.py --from-curriculum --parallel 3 --skip-existing  # 
 | 各ステージ10問 | 合計 490問（診断30＋43ステージ×10＋卒業試験30）。問題ファイルは `data/questions-add-5〜8.js` |
 
 絵は `scripts/retry_images.sh` が足りない分（章・ステージ・問題・解説）を拾って生成する。
+
+## v2.4（2026-11-07）管理者ページ・飲食店の数字（第3の道）
+
+石島さんの依頼：ダッシュボードを道場のページ内で管理者だけが見られるように／人ごとの進捗・結果・全体の進み具合／管理者のログイン（ID・パス）とスタッフのID・パスを管理／飲食店専門の経理代行に向けて「飲食店の数字」を経理・財務と並べる。
+
+| 増えたもの | 中身 |
+|---|---|
+| 管理者ページ `#admin`（`js/admin.js`） | フッターの「🔒 管理者」か URL 末尾 `#admin`。タブ：全体（受講者数・7日以内に学習・挑戦回数・学習時間・独り立ち・道ごとの平均進捗・30日の挑戦回数・2週間止まっている人・チームの得意苦手・つまずきやすいステージ・むずかしかった問題）／人ごと（一覧→個人の章ごとの進み・診断・間違えが多い分野・最近の挑戦）／ステージ別／スタッフのID・パス（追加・パス再設定・停止/再開・メモ・削除）／設定（自己登録の可否・管理者アカウントの追加/再設定/削除・自分のパスワード変更） |
+| GAS の管理者API（`gas/Code.js` の `adminApi_`） | POST `{kind:"admin", op, token}`。管理者は「管理者」シート（ID・ソルト付きハッシュ）。ログインで6時間有効のトークン（CacheService）。10回失敗で15分ロック。初回・再設定後はパスワード変更まで中を見られない |
+| 最初の管理者 | ID `admin`。初期パスワードはスプレッドシートの「管理者」タブD列にだけ書かれる（`?action=setup` か初回アクセスで作成）。初回ログインで変更するとD列は消える |
+| スタッフの状態 | 「受講者」シートに 状態（有効/停止）・登録元（本人/管理者:ID）・メモ を追加。停止中は記録もログインも不可。設定で自己登録を止めると、管理者が追加した人だけが入れる |
+| 合言葉 | 数字4桁 → 4〜32文字（既存の4桁はそのまま使える） |
+| 飲食店の数字（`data/inshoku.js`） | 入口に3枚目のカード。`window.INSHOKU`（章 r1〜r6・各3ステージ・track:"inshoku"）と `QUESTIONS_INSHOKU`。エンジンは経理と共通（`js/app.js` の `chaptersOf(track)`）。進捗ログの章ID が `r` で始まる行が飲食店の道。卒業試験の条件（全章クリア）は経理の道だけで数える |
+
+画像：飲食店の道の章・ステージ・問題の絵（`img/r*.jpg`・`img/qr*.jpg`・入口 `img/t-inshoku.jpg`）は未生成。ないときは絵なしで表示される。

@@ -11,7 +11,7 @@
   const QALL = () => (window.KichoDojo && window.KichoDojo.Q) || [];
 
   /* ---------- 道（トラック）とステージ ---------- */
-  const TRACKS = [{ id: "keiri", name: "経理の道", chapters: C.chapters }];
+  const TRACKS = [{ id: "keiri", name: "記帳・決算の道", chapters: C.chapters }];
   if (I && I.chapters) TRACKS.push({ id: "inshoku", name: I.name || "飲食店の数字", chapters: I.chapters });
   const stageInfo = {};
   TRACKS.forEach(t => t.chapters.forEach(ch => ch.stages.forEach((st, i) => { stageInfo[st.id] = { track: t.id, chapter: ch, label: `${t.id === "keiri" ? "" : "飲"}${ch.no}-${i + 1} ${st.name}` }; })));
@@ -53,7 +53,7 @@
         <button class="btn block" type="submit">入る</button>
       </form>
       <p class="muted" style="font-size:12px;margin-top:10px">最初の管理者は ID「admin」。初期パスワードは進捗スプレッドシートの「管理者」タブにだけ書かれています（初回ログインで変更すると消えます）。IDは「管理者」タブのA列を書き換えれば、メールアドレスにできます。</p>
-      <button class="btn secondary" id="adm-back" type="button">← 記帳道場へ戻る</button></div>`;
+      <button class="btn secondary" id="adm-back" type="button">← 経理・財務アカデミーへ戻る</button></div>`;
     $("#adm-back").onclick = leave;
     $("#adm-login").onsubmit = async e => {
       e.preventDefault();
@@ -236,7 +236,7 @@
 
   /* スタッフのID・パス */
   const APP_URL = location.origin + location.pathname;
-  const handout = (id, pass, disp) => `${disp ? disp + "さん\n" : ""}記帳道場のIDとパスをお送りします。\n${APP_URL}\nID：${id}\nパス：${pass}\n（スマホでもパソコンでも、同じIDとパスで続きから学べます）`;
+  const handout = (id, pass, disp) => `${disp ? disp + "さん\n" : ""}経理・財務アカデミーのIDとパスをお送りします。\n${APP_URL}\nID：${id}\nパス：${pass}\n（スマホでもパソコンでも、同じIDとパスで続きから学べます）`;
   function showHandout(id, pass, disp) {
     const t = handout(id, pass, disp);
     $("#sf-msg").innerHTML = `<div class="fb good" style="color:var(--ink)"><div class="ttl">本人に送る文面（この表示は画面を移ると消えます）</div><pre class="adm-pre">${esc(t)}</pre><button class="btn" id="sf-copy" type="button">文面をコピー</button></div>`;

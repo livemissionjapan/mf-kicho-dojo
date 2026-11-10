@@ -409,3 +409,6 @@ header.top .who button{white-space:nowrap;flex:none}
 .mp-weak{background:var(--warn-soft);color:var(--warn)}
 .mp-empty{margin-top:12px;border:1px dashed var(--line);border-radius:12px;padding:12px;text-align:center}
 @media (max-width:520px){.mp-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.mp-tile b{font-size:20px}}
+/* 名前が長くなったので、狭い画面ではブランドの文字を詰める（ログアウトのボタンがはみ出さないように） */
+@media (max-width:420px){header.top .brand{font-size:15px;letter-spacing:0;gap:6px}header.top .who #who-name{max-width:22vw}}
+@media (max-width:340px){header.top .brand{font-size:13px}header.top .brand .mark{width:24px;height:24px}header.top .who #who-name{display:none}}

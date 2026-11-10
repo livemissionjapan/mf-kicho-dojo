@@ -12,7 +12,7 @@
   const INS = window.INSHOKU || { chapters: [], fields: [] };
   const ALLCH = C.chapters.concat(INS.chapters || []);
   const trackOf = ch => ch.track || "keiri";
-  const TRACK_NAME = { keiri: "経理の道", inshoku: (INS.name || "飲食店の数字") + "の道" };
+  const TRACK_NAME = { keiri: "記帳・決算の道", inshoku: (INS.name || "飲食店の数字") + "の道" };
   const chaptersOf = t => ALLCH.filter(c => trackOf(c) === t);
   let homeTrack = "keiri";
   const fieldOf = id => C.fields.find(f => f.id === id) || (INS.fields || []).find(f => f.id === id);
@@ -41,7 +41,7 @@
     const parts = [];
     const top = { label: "マイページ", go: () => window.Finance && window.Finance.renderTrack() };
     const chTrack = (current && current.chapterView && (view === "chapter")) ? trackOf(current.chapterView) : (current && current.chapter ? trackOf(current.chapter) : homeTrack);
-    const keiri = { label: TRACK_NAME[chTrack] || "経理の道", go: () => renderHome(chTrack) };
+    const keiri = { label: TRACK_NAME[chTrack] || "記帳・決算の道", go: () => renderHome(chTrack) };
     if (view === "name") parts.push({ label: "はじめに" });
     else if (view === "track") parts.push({ label: "マイページ", here: true });
     else if (view === "home") parts.push(top, { label: TRACK_NAME[homeTrack] + " ワールドマップ", here: true });
@@ -525,7 +525,7 @@
     const chart = (title, fs) => `<div class="mp-chart"><h3>${esc(title)}</h3>${radar(fs)}${strongWeak(fs)}</div>`;
     const charts = (has(C.fields) ? chart("経理の得意・苦手", C.fields) : "") + (has(insF) ? chart("飲食店の数字の得意・苦手", insF) : "");
     host.innerHTML = `
-      <div class="mp-tiles">${tile("経理の道", "keiri")}${INS.chapters && INS.chapters.length ? tile(TRACK_NAME.inshoku, "inshoku") : ""}<div class="mp-tile"><span>むずかしかった印</span><b>${s.hard.length}<small>問</small></b><small class="muted">${s.hard.length ? "見直すと伸びます" : "まだありません"}</small></div></div>
+      <div class="mp-tiles">${tile("記帳・決算の道", "keiri")}${INS.chapters && INS.chapters.length ? tile(TRACK_NAME.inshoku, "inshoku") : ""}<div class="mp-tile"><span>むずかしかった印</span><b>${s.hard.length}<small>問</small></b><small class="muted">${s.hard.length ? "見直すと伸びます" : "まだありません"}</small></div></div>
       ${charts ? `<div class="mp-charts">${charts}</div>`
         : `<div class="mp-empty"><p class="muted">まだ記録がありません。好きな章から始めると、ここに進み具合と得意・苦手のグラフが出ます。実力診断を受けると、全分野の得意・苦手が一度に分かります。</p><button class="btn" id="mp-diag" type="button">実力診断を受ける</button></div>`}`;
     const b = host.querySelector("#mp-diag"); if (b) b.addEventListener("click", () => startDiag());

@@ -81,6 +81,10 @@ test("どの画面幅でも崩れない", { timeout: 600000 }, async t => {
       await page.evaluate(() => window.KichoDojo.openChapter("c1")); await check("章");
       await page.evaluate(() => window.Finance.renderTrack()); await page.click("#go-inshoku"); await check("飲食店の道 マップ");
       await page.evaluate(() => window.KichoDojo.openChapter("r1")); await check("飲食店の章");
+      await page.evaluate(() => window.Finance.renderTrack()); await page.click("#go-shikin"); await page.waitForSelector("#home.active"); await check("資金繰りの道 マップ");
+      await page.evaluate(() => window.KichoDojo.startDiag("shikin")); await check("資金繰りの実力診断");
+      await page.evaluate(() => window.Finance.renderTrack()); await page.click("#go-zaimu"); await page.waitForSelector("#home.active"); await check("財務の道 マップ");
+      await page.evaluate(() => window.KichoDojo.openChapter("z1")); await check("財務の章");
       for (const [k, id] of Object.entries(pickTypes)) {
         await page.evaluate(id => window.KichoDojo.showQuestion(id), id); await check(`問題 ${k}`);
         // 答えて解説を出す

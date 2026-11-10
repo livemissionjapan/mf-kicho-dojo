@@ -4,7 +4,7 @@
  * 問題は data/questions.js。図解は js/diagrams.js。画像は img/<id>.jpg（Codex image2 で生成）。
  */
 window.CURRICULUM = {
-  version: "2026-11-10.2",
+  version: "2026-11-10.3",
   appName: "経理・財務アカデミー",
   passRate: 0.8,
   /* 問題タイプ（questions.js の type と一致させる）

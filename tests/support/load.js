@@ -9,9 +9,10 @@ function load() {
   const W = window;
   const Q = Object.keys(W).filter(k => k.startsWith("QUESTIONS")).flatMap(k => W[k].map(q => Object.assign({ _file: k }, q)));
   const C = W.CURRICULUM, INS = W.INSHOKU || { chapters: [], fields: [] };
-  const chapters = C.chapters.concat(INS.chapters);
+  const XT = [W.SHIKIN, W.ZAIMU].filter(x => x && x.chapters);
+  const chapters = C.chapters.concat(INS.chapters, ...XT.map(x => x.chapters));
   const stages = chapters.flatMap(ch => ch.stages.map(st => Object.assign({ chapter: ch }, st)));
-  const fields = C.fields.concat(INS.fields);
+  const fields = C.fields.concat(INS.fields, ...XT.map(x => x.fields));
   return { W, Q, C, INS, F: W.FINANCE, chapters, stages, fields, srcs, ROOT };
 }
 module.exports = { load, ROOT };

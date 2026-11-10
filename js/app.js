@@ -1,7 +1,7 @@
 /* 記帳道場 v2 — 画面の進行・出題・採点・診断・進捗 */
 (function () {
   const C = window.CURRICULUM;
-  const Q = [].concat(window.QUESTIONS_A || [], window.QUESTIONS_B || [], window.QUESTIONS_ADD1 || [], window.QUESTIONS_ADD2 || [], window.QUESTIONS_ADD3 || [], window.QUESTIONS_ADD4 || [], window.QUESTIONS_ADD5 || [], window.QUESTIONS_ADD6 || [], window.QUESTIONS_ADD7 || [], window.QUESTIONS_ADD8 || [], window.QUESTIONS_ADD9 || [], window.QUESTIONS_INSHOKU || [], window.QUESTIONS || []);
+  const Q = [].concat(window.QUESTIONS_A || [], window.QUESTIONS_B || [], window.QUESTIONS_ADD1 || [], window.QUESTIONS_ADD2 || [], window.QUESTIONS_ADD3 || [], window.QUESTIONS_ADD4 || [], window.QUESTIONS_ADD5 || [], window.QUESTIONS_ADD6 || [], window.QUESTIONS_ADD7 || [], window.QUESTIONS_ADD8 || [], window.QUESTIONS_ADD9 || [], window.QUESTIONS_ADD10 || [], window.QUESTIONS_ADD11 || [], window.QUESTIONS_INSHOKU || [], window.QUESTIONS_SHIKIN || [], window.QUESTIONS_ZAIMU || [], window.QUESTIONS || []);
   const D = window.DIAGRAMS || {};
   const $ = (s, r) => (r || document).querySelector(s);
   const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
@@ -10,12 +10,18 @@
   const expHtml = t => String(t || "").split(/\n+/).map(p => "<p>" + esc(p) + "</p>").join("");
   /* 道（トラック）：経理＝C.chapters、飲食店の数字＝window.INSHOKU.chapters（track:"inshoku"）。財務は js/finance.js */
   const INS = window.INSHOKU || { chapters: [], fields: [] };
-  const ALLCH = C.chapters.concat(INS.chapters || []);
+  /* 追加の道：{ track, name, intro, fields, chapters }。飲食店の数字・資金繰り・財務 */
+  if (INS.chapters && INS.chapters.length && !INS.track) INS.track = "inshoku";
+  const XT = [INS, window.SHIKIN, window.ZAIMU].filter(x => x && x.chapters && x.chapters.length);
+  const ALLCH = C.chapters.concat(...XT.map(x => x.chapters));
   const trackOf = ch => ch.track || "keiri";
-  const TRACK_NAME = { keiri: "記帳・決算の道", inshoku: (INS.name || "飲食店の数字") + "の道" };
+  const TRACK_NAME = { keiri: "記帳・決算の道" }; XT.forEach(x => TRACK_NAME[x.track] = x.name + "の道");
+  const trackFields = t => t === "keiri" ? C.fields : ((XT.find(x => x.track === t) || {}).fields || []);
+  const trackIntro = t => t === "keiri" ? "" : ((XT.find(x => x.track === t) || {}).intro || "");
+  const diagOf = t => { const s = Store.load(); return t === "keiri" ? s.diag : (s.diagT || {})[t]; };
   const chaptersOf = t => ALLCH.filter(c => trackOf(c) === t);
   let homeTrack = "keiri";
-  const fieldOf = id => C.fields.find(f => f.id === id) || (INS.fields || []).find(f => f.id === id);
+  const fieldOf = id => C.fields.find(f => f.id === id) || XT.flatMap(x => x.fields || []).find(f => f.id === id);
   const chapterOfField = fid => ALLCH.find(c => c.field === fid);
 
   const stagesFlat = [];
@@ -77,7 +83,7 @@
   const tone = p => p >= 80 ? "ok" : p >= 50 ? "warn" : "ng";
   function fieldBars(fields, opts) {
     opts = opts || {};
-    return '<div class="fieldbars">' + C.fields.map(f => {
+    return '<div class="fieldbars">' + (opts.fields || C.fields).map(f => {
       const v = fields && fields[f.id]; const has = v && v.t;
       const p = has ? pct(v.c, v.t) : 0;
       const ch = chapterOfField(f.id);
@@ -121,8 +127,9 @@
     const s = Store.load();
     $("#who-name").textContent = s.display || s.name;
     $("#home-title").textContent = isK ? "ワールドマップ" : TRACK_NAME[homeTrack];
-    $("#home-intro").textContent = isK ? "" : (INS.intro || "");
-    $("#diag-card").style.display = isK ? "" : "none";
+    $("#home-intro").textContent = trackIntro(homeTrack);
+    if (homeTrack === "zaimu" && window.Finance) { $("#home-intro").insertAdjacentHTML("beforeend", ' <button class="d-btn" id="fin-room" type="button">読み物（視点・思考回路・知識カード）を開く</button>'); $("#fin-room").addEventListener("click", () => window.Finance.renderFinance()); }
+    $("#diag-card").style.display = "";
     $("#exam-card").style.display = isK ? "" : "none";
     const rate = overallRate(homeTrack);
     const bar = $("#ring-bar"); const len = 2 * Math.PI * 42;
@@ -132,17 +139,18 @@
     const clearedN = TS.filter(st => isCleared(st.id)).length;
     $("#home-sub").textContent = `クリア ${clearedN} / ${TS.length} ステージ・バッジ ${CH.filter(chapterDone).length} / ${CH.length}`;
     // 実力診断
-    const dg = $("#diag-card"); const diagQs = qByStage.diag || [];
-    if (!s.diag) {
-      dg.innerHTML = `<div class="diag-hero">${pic(C.diagnostic.img, "cover")}<div><h2>実力診断で得意・苦手を知る</h2><p class="muted">${esc(C.diagnostic.aim)}（${diagQs.length}問・約15分）。受けなくても、下の章からすぐ始められます</p><button class="btn" id="diag-start" type="button">実力診断をはじめる</button></div></div>`;
+    const dg = $("#diag-card"); const diagQs = diagQuestions(homeTrack); const dS = diagOf(homeTrack); const TF = trackFields(homeTrack);
+    const dAim = isK ? C.diagnostic.aim : `${diagQs.length}問で、${TF.length}つの分野のどこが得意でどこが苦手かを見える化します。クリア条件はありません`;
+    if (!dS) {
+      dg.innerHTML = `<div class="diag-hero">${pic(isK ? C.diagnostic.img : "", "cover")}<div><h2>実力診断で得意・苦手を知る</h2><p class="muted">${esc(dAim)}（約${Math.max(5, Math.round(diagQs.length / 2))}分）。受けなくても、下の章からすぐ始められます</p><button class="btn" id="diag-start" type="button">実力診断をはじめる</button></div></div>`;
     } else {
-      const worst = C.fields.map(f => ({ f, v: s.diag.fields[f.id] })).filter(x => x.v && x.v.t).sort((a, b) => pct(a.v.c, a.v.t) - pct(b.v.c, b.v.t))[0];
+      const worst = TF.map(f => ({ f, v: dS.fields[f.id] })).filter(x => x.v && x.v.t).sort((a, b) => pct(a.v.c, a.v.t) - pct(b.v.c, b.v.t))[0];
       const rec = worst ? chapterOfField(worst.f.id) : null;
-      dg.innerHTML = `<div class="row" style="align-items:baseline"><h2 style="margin:0">実力診断の結果</h2><span class="muted">${esc(s.diag.correct)} / ${esc(s.diag.total)} 問正解・${esc((s.diag.at || "").slice(0, 10))}</span><span class="sp"></span><button class="d-btn" id="diag-start" type="button">もう一度診断</button></div>
-        ${fieldBars(s.diag.fields, { link: true })}
+      dg.innerHTML = `<div class="row" style="align-items:baseline"><h2 style="margin:0">実力診断の結果</h2><span class="muted">${esc(dS.correct)} / ${esc(dS.total)} 問正解・${esc((dS.at || "").slice(0, 10))}</span><span class="sp"></span><button class="d-btn" id="diag-start" type="button">もう一度診断</button></div>
+        ${fieldBars(dS.fields, { link: true, fields: TF })}
         ${rec ? `<p class="muted">いちばん伸びしろがあるのは「${esc(worst.f.name)}」。<b>第${rec.no}章 ${esc(rec.name)}</b> から始めるのがおすすめです（分野名をタップで章へ）</p>` : ""}`;
     }
-    $("#diag-start").addEventListener("click", startDiag);
+    $("#diag-start").addEventListener("click", () => startDiag(homeTrack));
     dg.querySelectorAll("[data-ch]").forEach(n => { n.addEventListener("click", () => openChapter(n.dataset.ch)); n.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") openChapter(n.dataset.ch); }); });
     // 章の地図
     const map = $("#map"); map.innerHTML = "";
@@ -199,7 +207,7 @@
     $("#ch-goal").textContent = ch.goal;
     $("#ch-pic").innerHTML = pic(ch.img, "cover");
     const s = Store.load();
-    const dv = s.diag && s.diag.fields && s.diag.fields[ch.field];
+    const dT = diagOf(trackOf(ch)); const dv = dT && dT.fields && dT.fields[ch.field];
     $("#ch-diag").innerHTML = dv && dv.t ? `<span class="badge ${tone(pct(dv.c, dv.t))}">診断：${pct(dv.c, dv.t)}%（${dv.c}/${dv.t}）</span>` : "";
     const list = $("#stages"); list.innerHTML = "";
     ch.stages.forEach((st, i) => {
@@ -226,10 +234,17 @@
     setupStageDiagram(st.diagram);
     renderQuestion(); show("stage");
   }
-  function startDiag() {
-    const qs = qByStage.diag || [];
+  /* 実力診断の問題：記帳・決算は診断用の30問。ほかの道は各ステージから1問ずつ（最大24問・毎回入れ替わる） */
+  function diagQuestions(t) {
+    if (!t || t === "keiri") return qByStage.diag || [];
+    const picks = trackStages(t).map(st => { const l = qByStage[st.id] || []; return l.length ? l[Math.floor(Math.random() * l.length)] : null; }).filter(Boolean);
+    return shuffle(picks).slice(0, 24);
+  }
+  function startDiag(t) {
+    const track = typeof t === "string" ? t : "keiri";
+    const qs = diagQuestions(track);
     if (!qs.length) { toast("診断問題は準備中です"); return; }
-    current = { kind: "diag", chapter: null, stage: { id: "diag", name: C.diagnostic.name, pass: 0 }, qs: shuffle(qs), i: 0, correct: 0, wrong: [], hard: [], fields: {}, started: Date.now(), answered: false };
+    current = { kind: "diag", track, chapter: null, stage: { id: track === "keiri" ? "diag" : "diag-" + track, name: C.diagnostic.name, pass: 0 }, qs: shuffle(qs), i: 0, correct: 0, wrong: [], hard: [], fields: {}, started: Date.now(), answered: false };
     $("#st-title").textContent = "実力診断";
     $("#st-aim").textContent = "分からなくても気にせず、今の感覚で答えてください";
     $("#st-pic").innerHTML = "";
@@ -390,12 +405,14 @@
     let cleared = false, next = null, stageForRetry = null;
     if (current.kind === "diag") {
       const diag = { fields: current.fields, correct: current.correct, total: n, at: base.at };
-      Store.recordDiag(diag, { ...base, chapter: "diag", chapterName: "実力診断", stage: "diag", stageName: "実力診断", cleared: true, weak: C.fields.filter(f => current.fields[f.id] && pct(current.fields[f.id].c, current.fields[f.id].t) < 80).map(f => f.name).join(";") });
+      const dTrack = current.track || "keiri", dTF = trackFields(dTrack);
+      const dLog = { ...base, chapter: current.stage.id, chapterName: "実力診断" + (dTrack === "keiri" ? "" : "（" + TRACK_NAME[dTrack] + "）"), stage: current.stage.id, stageName: "実力診断", cleared: true, weak: dTF.filter(f => current.fields[f.id] && pct(current.fields[f.id].c, current.fields[f.id].t) < 80).map(f => f.name).join(";") };
+      if (dTrack === "keiri") Store.recordDiag(diag, dLog); else Store.recordDiagT(dTrack, diag, dLog);
       r.title.textContent = "実力診断の結果"; r.big.textContent = `${current.correct} / ${n}`; r.big.style.color = "var(--accent)";
       r.sub.textContent = `${secs}秒。分野ごとの正答率です。低いところから学ぶと効率的です`;
-      r.map.innerHTML = fieldBars(current.fields, { link: true });
+      r.map.innerHTML = fieldBars(current.fields, { link: true, fields: trackFields(current.track || "keiri") });
       r.map.querySelectorAll("[data-ch]").forEach(x => x.addEventListener("click", () => openChapter(x.dataset.ch)));
-      const worst = C.fields.map(f => ({ f, v: current.fields[f.id] })).filter(x => x.v && x.v.t).sort((a, b) => pct(a.v.c, a.v.t) - pct(b.v.c, b.v.t))[0];
+      const worst = trackFields(current.track || "keiri").map(f => ({ f, v: current.fields[f.id] })).filter(x => x.v && x.v.t).sort((a, b) => pct(a.v.c, a.v.t) - pct(b.v.c, b.v.t))[0];
       const rec = worst ? chapterOfField(worst.f.id) : null;
       if (rec) { next = { chapter: rec }; $("#r-next").textContent = `第${rec.no}章 ${rec.name} へ →`; }
       $("#r-retry").style.display = "none";
@@ -407,7 +424,7 @@
       r.title.textContent = cleared ? "合格！" : "あと少し";
       r.big.textContent = `${current.correct} / ${n}`; r.big.style.color = cleared ? "var(--ok)" : "var(--ng)";
       r.sub.textContent = `正答率 ${Math.round(rate * 100)}%（合格 ${Math.round(pass * 100)}%）・${Math.round(secs / 60)}分`;
-      r.map.innerHTML = fieldBars(current.fields, { link: true });
+      r.map.innerHTML = fieldBars(current.fields, { link: true, fields: trackFields(current.track || "keiri") });
       r.map.querySelectorAll("[data-ch]").forEach(x => x.addEventListener("click", () => openChapter(x.dataset.ch)));
       if (cleared) r.badge.innerHTML = `<div class="fb good"><div class="ttl">🏅 ${esc(C.exam.badge)}${wasDone ? "" : "　バッジを獲得"}</div><div>3店舗規模の飲食店の記帳代行を、一人で回せる水準です。</div></div>`;
       if (current.wrong.length) r.weak.innerHTML = "<div class='muted'>間違えた問題（章に戻って見直せます）</div>" + current.wrong.map(q => `<div class="miss">${esc(q.stem)}</div>`).join("");
@@ -433,7 +450,7 @@
     $("#r-next").style.display = next ? "" : "none";
     $("#r-next").onclick = () => next.stage ? startStage(next.stage.id) : openChapter(next.chapter.id);
     if (current.kind !== "exam") $("#r-retry").onclick = () => stageForRetry && startStage(stageForRetry.id);
-    $("#r-chapter").onclick = () => (current.kind === "diag" || current.kind === "exam") ? renderHome("keiri") : openChapter(current.chapter.id);
+    $("#r-chapter").onclick = () => (current.kind === "diag" || current.kind === "exam") ? renderHome(current.track || "keiri") : openChapter(current.chapter.id);
     $("#r-chapter").textContent = (current.kind === "diag" || current.kind === "exam") ? "マップへ" : "章に戻る";
     $("#r-send").textContent = Sheet.enabled ? "送信中…" : "（記録先の設定なし・この端末にのみ保存）";
     show("result");
@@ -475,7 +492,7 @@
   });
   $("#who-change").addEventListener("click", () => { Store.logout(); $("#who-name").textContent = ""; $("#name-input").value = ""; $("#pin-input").value = ""; $("#name-msg").textContent = ""; show("name"); });
   document.querySelectorAll("[data-go=home]").forEach(b => b.addEventListener("click", () => renderHome()));
-  $("#st-back").addEventListener("click", () => current && (current.kind === "diag" || current.kind === "exam") ? renderHome("keiri") : openChapter(current.chapter.id));
+  $("#st-back").addEventListener("click", () => current && (current.kind === "diag" || current.kind === "exam") ? renderHome(current.track || "keiri") : openChapter(current.chapter.id));
   $("#r-resend").addEventListener("click", async () => { if (rejected) return relogin(); const r = await Sheet.flush(); if (r.pin) { $("#r-send").textContent = rejectMsg(r.reason); $("#r-resend").textContent = "ログインし直す"; return; } toast(r.sent ? `${r.sent}件を送信しました` : "送信できませんでした"); renderHomeQuiet(); });
   function renderHomeQuiet() { const s = Store.load(); const n = $("#queue-note"); if (n) n.textContent = s.queue.length ? `未送信の記録 ${s.queue.length} 件` : ""; }
 
@@ -491,7 +508,7 @@
   function fieldScore(fid) {
     const ids = stagesFlat.filter(st => st.chapter.field === fid).map(st => st.id).filter(id => Store.stage(id));
     if (ids.length) return ids.reduce((a, id) => a + (Store.stage(id).best || 0), 0) / ids.length;
-    const d = Store.load().diag; const v = d && d.fields && d.fields[fid];
+    const s0 = Store.load(); const d = [s0.diag].concat(Object.values(s0.diagT || {})).find(x => x && x.fields && x.fields[fid]); const v = d && d.fields[fid];
     return v && v.t ? v.c / v.t : null;
   }
   function radar(fields) {
@@ -523,9 +540,9 @@
     const insF = INS.fields || [];
     const has = fs => fs.some(f => fieldScore(f.id) != null);
     const chart = (title, fs) => `<div class="mp-chart"><h3>${esc(title)}</h3>${radar(fs)}${strongWeak(fs)}</div>`;
-    const charts = (has(C.fields) ? chart("経理の得意・苦手", C.fields) : "") + (has(insF) ? chart("飲食店の数字の得意・苦手", insF) : "");
+    const charts = (has(C.fields) ? chart("記帳・決算の得意・苦手", C.fields) : "") + XT.map(x => has(x.fields || []) ? chart(x.name + "の得意・苦手", x.fields) : "").join("");
     host.innerHTML = `
-      <div class="mp-tiles">${tile("記帳・決算の道", "keiri")}${INS.chapters && INS.chapters.length ? tile(TRACK_NAME.inshoku, "inshoku") : ""}<div class="mp-tile"><span>むずかしかった印</span><b>${s.hard.length}<small>問</small></b><small class="muted">${s.hard.length ? "見直すと伸びます" : "まだありません"}</small></div></div>
+      <div class="mp-tiles">${tile("記帳・決算の道", "keiri")}${XT.map(x => tile(TRACK_NAME[x.track], x.track)).join("")}<div class="mp-tile"><span>むずかしかった印</span><b>${s.hard.length}<small>問</small></b><small class="muted">${s.hard.length ? "見直すと伸びます" : "まだありません"}</small></div></div>
       ${charts ? `<div class="mp-charts">${charts}</div>`
         : `<div class="mp-empty"><p class="muted">まだ記録がありません。好きな章から始めると、ここに進み具合と得意・苦手のグラフが出ます。実力診断を受けると、全分野の得意・苦手が一度に分かります。</p><button class="btn" id="mp-diag" type="button">実力診断を受ける</button></div>`}`;
     const b = host.querySelector("#mp-diag"); if (b) b.addEventListener("click", () => startDiag());

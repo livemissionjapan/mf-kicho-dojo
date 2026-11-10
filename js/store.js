@@ -45,6 +45,8 @@ window.Store = (function () {
     s.queue.push(rec.log); save();
   }
   function recordDiag(diag, log) { const s = load(); s.diag = diag; s.queue.push(log); save(); }
+  /* 記帳・決算以外の道の実力診断（道ごとに持つ） */
+  function recordDiagT(track, diag, log) { const s = load(); s.diagT = s.diagT || {}; s.diagT[track] = diag; s.queue.push(log); save(); }
   function toggleHard(qid, on) { const s = load(); const i = s.hard.indexOf(qid); if (on && i < 0) s.hard.push(qid); if (!on && i >= 0) s.hard.splice(i, 1); save(); }
   function isHard(qid) { return load().hard.includes(qid); }
   /* サーバーの記録を取り込む（良い方を残す） */
@@ -62,5 +64,5 @@ window.Store = (function () {
   function reset() { state = empty(); state.deviceId = uuid(); save(); }
   function takeQueue() { return load().queue.slice(); }
   function dropFromQueue(ids) { const s = load(); s.queue = s.queue.filter(l => !ids.includes(l.logId)); save(); }
-  return { load, save, setUser, stage, recordStage, recordDiag, toggleHard, isHard, merge, reset, logout, takeQueue, dropFromQueue, uuid };
+  return { load, save, setUser, stage, recordStage, recordDiag, recordDiagT, toggleHard, isHard, merge, reset, logout, takeQueue, dropFromQueue, uuid };
 })();

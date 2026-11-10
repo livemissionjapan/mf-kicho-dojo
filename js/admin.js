@@ -13,8 +13,9 @@
   /* ---------- 道（トラック）とステージ ---------- */
   const TRACKS = [{ id: "keiri", name: "記帳・決算の道", chapters: C.chapters }];
   if (I && I.chapters) TRACKS.push({ id: "inshoku", name: I.name || "飲食店の数字", chapters: I.chapters });
+  [window.SHIKIN, window.ZAIMU].forEach(x => { if (x && x.chapters && x.chapters.length) TRACKS.push({ id: x.track, name: x.name, chapters: x.chapters }); });
   const stageInfo = {};
-  TRACKS.forEach(t => t.chapters.forEach(ch => ch.stages.forEach((st, i) => { stageInfo[st.id] = { track: t.id, chapter: ch, label: `${t.id === "keiri" ? "" : "飲"}${ch.no}-${i + 1} ${st.name}` }; })));
+  TRACKS.forEach(t => t.chapters.forEach(ch => ch.stages.forEach((st, i) => { stageInfo[st.id] = { track: t.id, chapter: ch, label: `${({ keiri: "", inshoku: "飲", shikin: "資", zaimu: "財" })[t.id] || ""}${ch.no}-${i + 1} ${st.name}` }; })));
   const trackStages = tid => TRACKS.find(t => t.id === tid).chapters.flatMap(ch => ch.stages.map(s => s.id));
 
   let token = ""; try { token = sessionStorage.getItem(TKEY) || ""; } catch (e) { }

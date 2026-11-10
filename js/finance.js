@@ -122,7 +122,8 @@
 
   /* ---------- つなぎ込み ---------- */
   $("#go-keiri").addEventListener("click", () => window.KichoDojo.renderHome("keiri"));
-  $("#go-zaimu").addEventListener("click", () => { tag = ""; renderFinance(); });
+  $("#go-zaimu").addEventListener("click", () => { if (window.ZAIMU && window.ZAIMU.chapters && window.ZAIMU.chapters.length) window.KichoDojo.renderHome("zaimu"); else { tag = ""; renderFinance(); } });
+  const gs = $("#go-shikin"); if (gs) gs.addEventListener("click", () => window.KichoDojo.renderHome("shikin"));
   const gi = $("#go-inshoku"); if (gi) gi.addEventListener("click", () => window.KichoDojo.renderHome("inshoku"));
   document.querySelectorAll("[data-go=track]").forEach(b => b.addEventListener("click", renderTrack));
   $("#lens-dialog").addEventListener("click", e => { if (e.target.id === "lens-dialog") e.target.close(); });

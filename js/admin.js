@@ -100,13 +100,14 @@
   function build(j) {
     const logs = j.logs.map(r => ({ at: r[0], name: r[1], chapter: r[2], chapterName: r[3], stage: r[4], stageName: r[5], correct: r[6], total: r[7], rate: r[8], cleared: r[9], seconds: r[10], weak: r[11], hard: r[12], fields: r[13], app: r[14] }));
     const people = {};
-    const ensure = n => people[n] = people[n] || { name: n, user: null, logs: [], stages: {}, diag: null, exam: null, seconds: 0, first: "", last: "", hard: new Set() };
+    const ensure = n => people[n] = people[n] || { name: n, user: null, logs: [], stages: {}, diag: null, diagT: {}, exam: null, seconds: 0, first: "", last: "", hard: new Set() };
     j.users.forEach(u => { ensure(u.name).user = u; });
     logs.forEach(l => {
       const p = ensure(l.name); p.logs.push(l); p.seconds += l.seconds;
       if (!p.first || l.at < p.first) p.first = l.at; if (!p.last || l.at > p.last) p.last = l.at;
       l.hard.split(";").filter(Boolean).forEach(x => p.hard.add(x));
       if (l.stage === "diag") { if (!p.diag || l.at > p.diag.at) { let f = null; try { f = JSON.parse(l.fields || "null"); } catch (e) { } p.diag = { at: l.at, rate: l.rate, correct: l.correct, total: l.total, fields: f }; } return; }
+      if (l.stage.indexOf("diag-") === 0) { const tr = l.stage.slice(5), cur = p.diagT[tr]; if (!cur || l.at > cur.at) { let f = null; try { f = JSON.parse(l.fields || "null"); } catch (e) { } p.diagT[tr] = { at: l.at, rate: l.rate, correct: l.correct, total: l.total, fields: f }; } return; }
       if (l.stage === "exam") { const e = p.exam || { best: 0, cleared: false, attempts: 0, last: "" }; e.best = Math.max(e.best, l.rate); e.cleared = e.cleared || l.cleared; e.attempts++; if (l.at > e.last) e.last = l.at; p.exam = e; return; }
       const s = p.stages[l.stage] || { best: 0, cleared: false, attempts: 0, last: "", seconds: 0 };
       s.best = Math.max(s.best, l.rate); s.cleared = s.cleared || l.cleared; s.attempts++; s.seconds += l.seconds; if (l.at > s.last) s.last = l.at;
@@ -130,7 +131,7 @@
   const mins = sec => { const m = Math.round(sec / 60); return m >= 60 ? `${Math.floor(m / 60)}時間${m % 60}分` : `${m}分`; };
   const bar = (x, label) => `<div class="adm-bar"><i class="${tone(x)}" style="width:${Math.round((x || 0) * 100)}%"></i><span>${esc(label != null ? label : pct(x))}</span></div>`;
   const qById = () => { const m = {}; QALL().forEach(q => m[q.id] = q); return m; };
-  const fieldName = id => { const f = C.fields.find(x => x.id === id) || (I && (I.fields || []).find(x => x.id === id)); return f ? f.short || f.name : id; };
+  const fieldName = id => { const f = C.fields.find(x => x.id === id) || [I, window.SHIKIN, window.ZAIMU].filter(Boolean).flatMap(x => x.fields || []).find(x => x.id === id); return f ? f.short || f.name : id; };
 
   function render() {
     if (!D) return load();
@@ -211,13 +212,13 @@
         ${p.exam ? `<p>${p.exam.cleared ? '<span class="badge gold">🏅 記帳代行 独り立ち</span>' : "卒業試験："} 最高 ${pct(p.exam.best)}・${p.exam.attempts}回</p>` : ""}
         ${p.next ? `<p class="muted">いま取り組んでいるところ：${esc(p.next)}</p>` : ""}</div>
       ${TRACKS.map(t => `<div class="card"><h2>${esc(t.name)}</h2>${t.chapters.map(ch => { const ids = ch.stages.map(s => s.id); const done = ids.filter(id => p.stages[id] && p.stages[id].cleared).length; return `<div class="adm-ch"><div class="adm-lbl">第${ch.no}章 ${esc(ch.name)}<small>${done}/${ids.length}</small></div><div class="adm-dots">${ch.stages.map((s, i) => { const r = p.stages[s.id]; return `<span class="${r ? (r.cleared ? "done" : "try") : ""}" title="${esc(`${ch.no}-${i + 1} ${s.name}：${r ? `最高${pct(r.best)}・${r.attempts}回` : "未挑戦"}`)}">${r ? Math.round(r.best * 100) : ""}</span>`; }).join("")}</div></div>`; }).join("")}</div>`).join("")}
-      <div class="card"><h2>実力診断</h2>${p.diag && p.diag.fields ? `<p class="muted">${day(p.diag.at)}・${p.diag.correct}/${p.diag.total}問</p>` + Object.entries(p.diag.fields).filter(([, v]) => v && v.t).map(([k, v]) => `<div class="adm-line"><div class="adm-lbl">${esc(fieldName(k))}</div>${bar(v.c / v.t, `${Math.round(v.c / v.t * 100)}% ${v.c}/${v.t}`)}</div>`).join("") : '<p class="muted">まだ受けていません</p>'}</div>
+      <div class="card"><h2>実力診断</h2>${p.diag && p.diag.fields ? `<p class="muted">${day(p.diag.at)}・${p.diag.correct}/${p.diag.total}問</p>` + Object.entries(p.diag.fields).filter(([, v]) => v && v.t).map(([k, v]) => `<div class="adm-line"><div class="adm-lbl">${esc(fieldName(k))}</div>${bar(v.c / v.t, `${Math.round(v.c / v.t * 100)}% ${v.c}/${v.t}`)}</div>`).join("") : '<p class="muted">まだ受けていません</p>'}${Object.entries(p.diagT).map(([tr, d]) => `<h3 style="margin-top:12px">${esc((TRACKS.find(t => t.id === tr) || {}).name || tr)}</h3><p class="muted">${day(d.at)}・${d.correct}/${d.total}問</p>` + Object.entries(d.fields || {}).filter(([, v]) => v && v.t).map(([k, v]) => `<div class="adm-line"><div class="adm-lbl">${esc(fieldName(k))}</div>${bar(v.c / v.t, `${Math.round(v.c / v.t * 100)}% ${v.c}/${v.t}`)}</div>`).join("")).join("")}</div>
       <div class="adm-grid2">
         <div class="card"><h2>間違えが多い分野</h2>${weakTop.length ? weakTop.map(([w, n]) => `<div class="adm-q"><b>${n}回</b><span>${esc(w)}</span></div>`).join("") : '<p class="muted">なし</p>'}</div>
         <div class="card"><h2>「むずかしかった」の印（${p.hard.size}問）</h2>${[...p.hard].slice(0, 10).map(id => `<div class="adm-q"><span>${esc(qm[id] ? qm[id].stem : id)}</span></div>`).join("") || '<p class="muted">なし</p>'}</div>
       </div>
       <div class="card"><h2>最近の挑戦</h2><div class="adm-table"><table><thead><tr><th>日時</th><th>ステージ</th><th>結果</th><th>時間</th></tr></thead><tbody>
-        ${p.logs.slice().sort((a, b) => b.at.localeCompare(a.at)).slice(0, 30).map(l => `<tr><td>${esc(l.at.slice(0, 16).replace("T", " "))}</td><td>${esc(l.stage === "diag" ? "実力診断" : l.stage === "exam" ? "卒業試験" : (stageInfo[l.stage] ? stageInfo[l.stage].label : l.stageName))}</td><td><span class="badge ${l.cleared ? "ok" : tone(l.rate)}">${l.correct}/${l.total}${l.cleared ? " クリア" : ""}</span></td><td>${mins(l.seconds)}</td></tr>`).join("") || '<tr><td colspan="4" class="muted">まだありません</td></tr>'}
+        ${p.logs.slice().sort((a, b) => b.at.localeCompare(a.at)).slice(0, 30).map(l => `<tr><td>${esc(l.at.slice(0, 16).replace("T", " "))}</td><td>${esc(l.stage === "diag" ? "実力診断" : l.stage.indexOf("diag-") === 0 ? "実力診断（" + ((TRACKS.find(t => t.id === l.stage.slice(5)) || {}).name || "") + "）" : l.stage === "exam" ? "卒業試験" : (stageInfo[l.stage] ? stageInfo[l.stage].label : l.stageName))}</td><td><span class="badge ${l.cleared ? "ok" : tone(l.rate)}">${l.correct}/${l.total}${l.cleared ? " クリア" : ""}</span></td><td>${mins(l.seconds)}</td></tr>`).join("") || '<tr><td colspan="4" class="muted">まだありません</td></tr>'}
       </tbody></table></div></div>`;
     $("#pp-back").onclick = () => { person = null; render(); };
   }

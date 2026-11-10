@@ -57,6 +57,7 @@ window.Store = (function () {
       s.stages[id] = { best: Math.max(l.best, r.best || 0), attempts: Math.max(l.attempts, r.attempts || 0), cleared: l.cleared || !!r.cleared, last: (r.last || "") > (l.last || "") ? r.last : l.last, weak: l.weak || [] };
     });
     if (remote.diag && remote.diag.fields && (!s.diag || (remote.diag.at || "") > (s.diag.at || ""))) s.diag = remote.diag;
+    Object.entries(remote.diagT || {}).forEach(([t, d]) => { if (!d || !d.fields) return; s.diagT = s.diagT || {}; const l = s.diagT[t]; if (!l || (d.at || "") > (l.at || "")) s.diagT[t] = d; });
     (remote.hard || []).forEach(q => { if (!s.hard.includes(q)) s.hard.push(q); });
     save();
   }

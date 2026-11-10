@@ -129,7 +129,7 @@ function doPost(e) {
 function summarize_(name) {
   const sh = logSheet_();
   const last = sh.getLastRow();
-  const out = { stages: {}, diag: null, hard: [] };
+  const out = { stages: {}, diag: null, diagT: {}, hard: [] };
   if (last < 2) return out;
   const vals = sh.getRange(2, 1, last - 1, HEADER.length).getValues();
   const hardSet = new Set();
@@ -145,6 +145,14 @@ function summarize_(name) {
       if (!out.diag || atIso > out.diag.at) {
         let fields = null; try { fields = JSON.parse(String(r[col_("分野別") - 1] || "null")); } catch (e) { }
         out.diag = { fields, at: atIso, correct: Number(r[col_("正答数") - 1]) || 0, total: Number(r[col_("問題数") - 1]) || 0 };
+      }
+      return;
+    }
+    if (stage.indexOf("diag-") === 0) { // 記帳・決算以外の道の実力診断（道ごとに最新の1回）
+      const tr = stage.slice(5), cur = out.diagT[tr];
+      if (!cur || atIso > cur.at) {
+        let fields = null; try { fields = JSON.parse(String(r[col_("分野別") - 1] || "null")); } catch (e) { }
+        out.diagT[tr] = { fields, at: atIso, correct: Number(r[col_("正答数") - 1]) || 0, total: Number(r[col_("問題数") - 1]) || 0 };
       }
       return;
     }
@@ -171,7 +179,7 @@ function doGet(e) {
       return json_({ received: ids.filter(id => seen.has(id)) });
     }
     const sum = summarize_(name);
-    return json_({ ok: true, new: !!u.isNew, display: u.display || "", stages: sum.stages, diag: sum.diag, hard: sum.hard });
+    return json_({ ok: true, new: !!u.isNew, display: u.display || "", stages: sum.stages, diag: sum.diag, diagT: sum.diagT, hard: sum.hard });
   }
   if (p.action === "count") {
     const sh = logSheet_(); const last = sh.getLastRow(); if (last < 2) return json_({ count: 0 });

@@ -39,11 +39,11 @@
   /* ---------- 現在地（パンくず） ---------- */
   function setCrumb(view) {
     const parts = [];
-    const top = { label: "入口（トップ）", go: () => window.Finance && window.Finance.renderTrack() };
+    const top = { label: "マイページ", go: () => window.Finance && window.Finance.renderTrack() };
     const chTrack = (current && current.chapterView && (view === "chapter")) ? trackOf(current.chapterView) : (current && current.chapter ? trackOf(current.chapter) : homeTrack);
     const keiri = { label: TRACK_NAME[chTrack] || "経理の道", go: () => renderHome(chTrack) };
     if (view === "name") parts.push({ label: "はじめに" });
-    else if (view === "track") parts.push({ label: "入口（トップ）", here: true });
+    else if (view === "track") parts.push({ label: "マイページ", here: true });
     else if (view === "home") parts.push(top, { label: TRACK_NAME[homeTrack] + " ワールドマップ", here: true });
     else if (view === "hard") parts.push(top, keiri, { label: "むずかしかった問題", here: true });
     else if (view === "finance") parts.push(top, { label: "財務の部屋", here: true });
@@ -474,8 +474,53 @@
     current.qs = [q].concat(current.qs.filter(x => x !== q)); current.i = 0; renderQuestion(); return true;
   }
 
+  /* ---------- マイページ（ログイン後のトップ）：得意・苦手をグラフで ---------- */
+  /* 分野の点＝その分野の章で挑戦したステージの最高正答率の平均。まだ無ければ実力診断の正答率 */
+  function fieldScore(fid) {
+    const ids = stagesFlat.filter(st => st.chapter.field === fid).map(st => st.id).filter(id => Store.stage(id));
+    if (ids.length) return ids.reduce((a, id) => a + (Store.stage(id).best || 0), 0) / ids.length;
+    const d = Store.load().diag; const v = d && d.fields && d.fields[fid];
+    return v && v.t ? v.c / v.t : null;
+  }
+  function radar(fields) {
+    const n = fields.length, cx = 160, cy = 150, R = 96;
+    const pt = (i, r) => { const a = -Math.PI / 2 + i * 2 * Math.PI / n; return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; };
+    const xy = p => p.map(v => v.toFixed(1)).join(",");
+    const sc = fields.map(f => fieldScore(f.id));
+    const ring = k => fields.map((_, i) => xy(pt(i, R * k))).join(" ");
+    return `<svg class="radar" viewBox="0 0 320 300" role="img" aria-label="分野ごとの正答率">
+      ${[1, .5].map(k => `<polygon class="r-grid" points="${ring(k)}"/>`).join("")}
+      ${fields.map((_, i) => { const [x, y] = pt(i, R); return `<line class="r-grid" x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`; }).join("")}
+      <polygon class="r-area" points="${sc.map((v, i) => xy(pt(i, R * (v || 0)))).join(" ")}"/>
+      ${sc.map((v, i) => { if (v == null) return ""; const [x, y] = pt(i, R * v); return `<circle class="r-dot ${tone(Math.round(v * 100))}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4"><title>${esc(fields[i].name)} ${Math.round(v * 100)}%</title></circle>`; }).join("")}
+      ${fields.map((f, i) => { const [x, y] = pt(i, R + 18); const anchor = Math.abs(x - cx) < 8 ? "middle" : x > cx ? "start" : "end"; return `<text class="r-lbl${sc[i] == null ? " none" : ""}" x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="${anchor}">${esc(f.short)}</text>`; }).join("")}
+    </svg>`;
+  }
+  function strongWeak(fields) {
+    const sc = fields.map(f => [f, fieldScore(f.id)]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
+    if (sc.length < 2) return "";
+    const top = sc.slice(0, 2).filter(x => x[1] >= .6);
+    const low = sc.slice(-2).reverse().filter(x => x[1] < .8 && !top.includes(x));
+    const names = l => l.map(x => esc(x[0].name)).join("・");
+    return `<div class="mp-sw">${top.length ? `<span class="mp-good">得意　${names(top)}</span>` : ""}${low.length ? `<span class="mp-weak">のびしろ　${names(low)}</span>` : ""}</div>`;
+  }
+  function renderMyPage(host) {
+    if (!host) return;
+    const s = Store.load();
+    const tile = (label, t) => { const l = trackStages(t), n = l.filter(x => isCleared(x.id)).length, p = pct(n, l.length); return `<div class="mp-tile"><span>${esc(label)}</span><b>${p}<small>%</small></b><div class="fb-bar"><i class="ok" style="width:${p}%"></i></div><small class="muted">${n}/${l.length} ステージ</small></div>`; };
+    const insF = INS.fields || [];
+    const has = fs => fs.some(f => fieldScore(f.id) != null);
+    const chart = (title, fs) => `<div class="mp-chart"><h3>${esc(title)}</h3>${radar(fs)}${strongWeak(fs)}</div>`;
+    const charts = (has(C.fields) ? chart("経理の得意・苦手", C.fields) : "") + (has(insF) ? chart("飲食店の数字の得意・苦手", insF) : "");
+    host.innerHTML = `
+      <div class="mp-tiles">${tile("経理の道", "keiri")}${INS.chapters && INS.chapters.length ? tile(TRACK_NAME.inshoku, "inshoku") : ""}<div class="mp-tile"><span>むずかしかった印</span><b>${s.hard.length}<small>問</small></b><small class="muted">${s.hard.length ? "見直すと伸びます" : "まだありません"}</small></div></div>
+      ${charts ? `<div class="mp-charts">${charts}</div>`
+        : `<div class="mp-empty"><p class="muted">まだ記録がありません。実力診断を受けると、ここに得意・苦手のグラフが出ます。</p><button class="btn" id="mp-diag" type="button">実力診断を受ける</button></div>`}`;
+    const b = host.querySelector("#mp-diag"); if (b) b.addEventListener("click", () => startDiag());
+  }
+
   /* 検証用フック */
-  window.KichoDojo = { showQuestion, startStage, startDiag, startExam, openChapter, renderDiagram, renderHome, setCrumb, chaptersOf, trackOf, get current() { return current; }, stagesFlat, qByStage, Q };
+  window.KichoDojo = { renderMyPage, showQuestion, startStage, startDiag, startExam, openChapter, renderDiagram, renderHome, setCrumb, chaptersOf, trackOf, get current() { return current; }, stagesFlat, qByStage, Q };
 
   /* ---------- 起動 ---------- */
   $("#ver").textContent = "版 " + C.version + "・問題 " + Q.length + "問";

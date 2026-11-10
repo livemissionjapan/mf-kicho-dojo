@@ -35,12 +35,15 @@
     </div>
   </section>
 
-  <!-- 入口：経理を学ぶ／財務を学ぶ -->
+  <!-- マイページ（ログイン後のトップ）：自分の状態＋入口（経理／財務／飲食店） -->
   <section id="track" class="view">
     <div class="card">
+      <div class="eyebrow">マイページ</div>
       <h1 id="track-hello">今日はどれを学びますか？</h1>
-      <p class="muted">経理は「日々の仕訳を正しく」、財務は「その数字で会社をどう動かすか」、飲食店の数字は「お店の数字を読んで打ち手につなげる」。</p>
+      <div id="mypage"></div>
     </div>
+    <h2 class="tracks-h">今日はどれを学びますか？</h2>
+    <p class="muted">経理は「日々の仕訳を正しく」、財務は「その数字で会社をどう動かすか」、飲食店の数字は「お店の数字を読んで打ち手につなげる」。</p>
     <div class="tracks">
       <button class="track-card" id="go-keiri" type="button">
         <img src="img/t-keiri.jpg" alt="" onerror="this.classList.add('noimg')">
@@ -48,7 +51,7 @@
       </button>
       <button class="track-card zaimu" id="go-zaimu" type="button">
         <img src="img/t-zaimu.jpg" alt="" onerror="this.classList.add('noimg')">
-        <span class="track-tx"><span class="track-tag">財務</span><b>財務を学ぶ</b><span class="muted">財務アドバイザー・カルロさんの頭の中。視点・思考回路・知識カードで、数字の使い方を盗む</span><span class="track-go">財務の部屋へ →</span></span>
+        <span class="track-tx"><span class="track-tag">財務</span><b>財務を学ぶ</b><span class="muted">財務アドバイザーの頭の中。視点・思考回路・知識カードで、数字の使い方を盗む</span><span class="track-go">財務の部屋へ →</span></span>
       </button>
       <button class="track-card inshoku" id="go-inshoku" type="button">
         <img src="img/t-inshoku.jpg" alt="" onerror="this.classList.add('noimg')">
@@ -59,13 +62,13 @@
 
   <!-- 財務ルート -->
   <section id="finance" class="view">
-    <div class="row" style="margin:8px 0"><button class="btn secondary" data-go="track" type="button">← 入口</button></div>
+    <div class="row" style="margin:8px 0"><button class="btn secondary" data-go="track" type="button">← マイページ</button></div>
     <div id="finance-box"></div>
   </section>
 
   <!-- ホーム -->
   <section id="home" class="view">
-    <div class="row" style="margin:8px 0"><button class="btn secondary" data-go="track" type="button">← 入口</button></div>
+    <div class="row" style="margin:8px 0"><button class="btn secondary" data-go="track" type="button">← マイページ</button></div>
     <div class="card hero">
       <svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle class="track" cx="50" cy="50" r="42"/><circle class="bar" id="ring-bar" cx="50" cy="50" r="42"/><text id="ring-text" x="50" y="57" text-anchor="middle">0%</text></svg>
       <div><h1 style="margin:0" id="home-title">ワールドマップ</h1><div class="muted" id="home-intro" style="font-size:13px"></div><div class="muted" id="home-sub"></div><div class="muted" id="hard-note" style="font-size:13px"></div><div class="muted" id="queue-note" style="font-size:12px"></div></div>

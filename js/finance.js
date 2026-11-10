@@ -14,7 +14,8 @@
   function renderTrack() {
     const st0 = window.Store ? Store.load() : {}; const name = st0.display || (st0.name && !st0.name.includes("@") ? st0.name : "") || "";
     $("#who-name").textContent = st0.display || st0.name || "";
-    $("#track-hello").textContent = name ? `${name}さん、今日はどれを学びますか？` : "今日はどれを学びますか？";
+    $("#track-hello").textContent = name ? `${name}さんの今の状態` : "あなたの今の状態";
+    if (window.KichoDojo && window.KichoDojo.renderMyPage) window.KichoDojo.renderMyPage($("#mypage"));
     show("track");
   }
 

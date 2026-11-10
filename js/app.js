@@ -134,7 +134,7 @@
     // 実力診断
     const dg = $("#diag-card"); const diagQs = qByStage.diag || [];
     if (!s.diag) {
-      dg.innerHTML = `<div class="diag-hero">${pic(C.diagnostic.img, "cover")}<div><h2>まずは実力診断</h2><p class="muted">${esc(C.diagnostic.aim)}（${diagQs.length}問・約10分）</p><button class="btn" id="diag-start" type="button">実力診断をはじめる</button></div></div>`;
+      dg.innerHTML = `<div class="diag-hero">${pic(C.diagnostic.img, "cover")}<div><h2>実力診断で得意・苦手を知る</h2><p class="muted">${esc(C.diagnostic.aim)}（${diagQs.length}問・約15分）。受けなくても、下の章からすぐ始められます</p><button class="btn" id="diag-start" type="button">実力診断をはじめる</button></div></div>`;
     } else {
       const worst = C.fields.map(f => ({ f, v: s.diag.fields[f.id] })).filter(x => x.v && x.v.t).sort((a, b) => pct(a.v.c, a.v.t) - pct(b.v.c, b.v.t))[0];
       const rec = worst ? chapterOfField(worst.f.id) : null;
@@ -439,10 +439,22 @@
     show("result");
     if (cleared) confetti();
     const res = await Sheet.flush();
-    $("#r-send").textContent = !Sheet.enabled ? "（記録先の設定なし・この端末にのみ保存）" : res.sent ? `記録しました（${res.sent}件）` : res.pin ? "合言葉が違うか、IDが使えない設定のため記録できません。名前から入り直してください" : "記録を送信できませんでした。次回起動時に再送します";
+    $("#r-send").textContent = !Sheet.enabled ? "（記録先の設定なし・この端末にのみ保存）" : res.sent ? `記録しました（${res.sent}件）` : res.pin ? rejectMsg(res.reason) : "記録を送信できませんでした。次回起動時に再送します";
+    $("#r-resend").textContent = res.pin ? "ログインし直す" : "再送";
   }
 
-  /* ---------- 名前・合言葉 ---------- */
+  /* ---------- ID・パス ---------- */
+  /* サーバーがこのID・パスを受け付けなかったとき（パス違い・未登録・停止）。結果は端末に残り、入り直せば送られる */
+  let rejected = "";
+  function rejectMsg(reason) {
+    rejected = reason || "pin";
+    const why = reason === "unknown" ? "このIDは登録されていない" : reason === "stopped" ? "このIDは今使えない設定になっている" : "パスが登録と違う";
+    return why + "ため、記録を送れていません。結果はこの端末に残っています。管理者から受け取ったIDとパスでログインし直すと送信されます";
+  }
+  function relogin() {
+    const s = Store.load(), name = s.name || ""; const msg = rejectMsg(rejected);
+    Store.logout(); rejected = ""; $("#who-name").textContent = ""; $("#name-input").value = name; $("#pin-input").value = ""; $("#name-msg").textContent = msg; show("name");
+  }
   $("#name-form").addEventListener("submit", async e => {
     e.preventDefault();
     let name = $("#name-input").value.trim(); const pin = $("#pin-input").value.trim();
@@ -464,7 +476,7 @@
   $("#who-change").addEventListener("click", () => { Store.logout(); $("#who-name").textContent = ""; $("#name-input").value = ""; $("#pin-input").value = ""; $("#name-msg").textContent = ""; show("name"); });
   document.querySelectorAll("[data-go=home]").forEach(b => b.addEventListener("click", () => renderHome()));
   $("#st-back").addEventListener("click", () => current && (current.kind === "diag" || current.kind === "exam") ? renderHome("keiri") : openChapter(current.chapter.id));
-  $("#r-resend").addEventListener("click", async () => { const r = await Sheet.flush(); toast(r.sent ? `${r.sent}件を送信しました` : "送信できませんでした"); renderHomeQuiet(); });
+  $("#r-resend").addEventListener("click", async () => { if (rejected) return relogin(); const r = await Sheet.flush(); if (r.pin) { $("#r-send").textContent = rejectMsg(r.reason); $("#r-resend").textContent = "ログインし直す"; return; } toast(r.sent ? `${r.sent}件を送信しました` : "送信できませんでした"); renderHomeQuiet(); });
   function renderHomeQuiet() { const s = Store.load(); const n = $("#queue-note"); if (n) n.textContent = s.queue.length ? `未送信の記録 ${s.queue.length} 件` : ""; }
 
   /* 1問を指定して開く（テストと管理者の確認用） */
@@ -515,15 +527,23 @@
     host.innerHTML = `
       <div class="mp-tiles">${tile("経理の道", "keiri")}${INS.chapters && INS.chapters.length ? tile(TRACK_NAME.inshoku, "inshoku") : ""}<div class="mp-tile"><span>むずかしかった印</span><b>${s.hard.length}<small>問</small></b><small class="muted">${s.hard.length ? "見直すと伸びます" : "まだありません"}</small></div></div>
       ${charts ? `<div class="mp-charts">${charts}</div>`
-        : `<div class="mp-empty"><p class="muted">まだ記録がありません。実力診断を受けると、ここに得意・苦手のグラフが出ます。</p><button class="btn" id="mp-diag" type="button">実力診断を受ける</button></div>`}`;
+        : `<div class="mp-empty"><p class="muted">まだ記録がありません。好きな章から始めると、ここに進み具合と得意・苦手のグラフが出ます。実力診断を受けると、全分野の得意・苦手が一度に分かります。</p><button class="btn" id="mp-diag" type="button">実力診断を受ける</button></div>`}`;
     const b = host.querySelector("#mp-diag"); if (b) b.addEventListener("click", () => startDiag());
   }
 
   /* 検証用フック */
-  window.KichoDojo = { renderMyPage, showQuestion, startStage, startDiag, startExam, openChapter, renderDiagram, renderHome, setCrumb, chaptersOf, trackOf, get current() { return current; }, stagesFlat, qByStage, Q };
+  window.KichoDojo = { relogin, renderMyPage, showQuestion, startStage, startDiag, startExam, openChapter, renderDiagram, renderHome, setCrumb, chaptersOf, trackOf, get current() { return current; }, stagesFlat, qByStage, Q };
 
   /* ---------- 起動 ---------- */
   $("#ver").textContent = "版 " + C.version + "・問題 " + Q.length + "問";
   const s = Store.load();
-  if (s.name && s.pin) { window.Finance.renderTrack(); Sheet.flush().then(renderHomeQuiet); } else show("name");
+  if (s.name && s.pin) {
+    window.Finance.renderTrack();
+    // 端末に残っているID・パスが今も通るかを確かめる（通らないまま解くと、記録が送れない）
+    Sheet.restore(s.name, s.pin, s.deviceId).then(res => {
+      if (res && (res.error === "pin" || res.error === "unknown" || res.error === "stopped")) { rejectMsg(res.error); relogin(); return; }
+      if (res && res.ok && !res.new && !res.offline) Store.merge(res);
+      Sheet.flush().then(renderHomeQuiet);
+    });
+  } else show("name");
 })();

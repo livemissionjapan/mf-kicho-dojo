@@ -29,7 +29,7 @@ window.Sheet = (function () {
       const r = await withTimeout(fetch(GAS_URL + "?" + q({ action: "ack", name: s.name, pin: s.pin, ids: queue.map(l => l.logId).join(",") })), 15000);
       const j = await r.json();
       if (j && Array.isArray(j.received)) { Store.dropFromQueue(j.received); return { sent: j.received.length, pending: queue.length - j.received.length }; }
-      if (j && (j.error === "pin" || j.error === "stopped" || j.error === "unknown")) return { sent: 0, pending: queue.length, pin: true };
+      if (j && (j.error === "pin" || j.error === "stopped" || j.error === "unknown")) return { sent: 0, pending: queue.length, pin: true, reason: j.error };
     } catch (e) { }
     return { sent: 0, pending: queue.length, unconfirmed: true };
   }

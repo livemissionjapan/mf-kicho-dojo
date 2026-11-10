@@ -32,7 +32,7 @@
       <div class="card fin-hero">
         ${img("f-hero", "fin-hero-pic")}
         <div>
-          <div class="eyebrow">${esc(F.role)}の頭の中</div>
+          <div class="eyebrow">財務を学ぶ</div>
           <h1>${esc(F.person)}は、数字をどう考えているか</h1>
           <p class="muted">${esc(F.intro)}</p>
           <div class="fin-stats">

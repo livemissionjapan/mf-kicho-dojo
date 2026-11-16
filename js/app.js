@@ -437,7 +437,7 @@
       Store.recordStage(st.id, { rate, cleared, weak, log: { ...base, chapter: st.chapter.id, chapterName: st.chapter.name, stage: st.id, stageName: st.name, cleared, weak: weak.join(";") } });
       r.title.textContent = cleared ? "ステージクリア！" : "もう一度挑戦";
       r.big.textContent = `${current.correct} / ${n}`; r.big.style.color = cleared ? "var(--ok)" : "var(--ng)";
-      r.sub.textContent = `正答率 ${Math.round(rate * 100)}%（クリア条件 ${Math.round(pass * 100)}%）・${secs}秒`;
+      r.sub.textContent = `正答率 ${Math.round(rate * 100)}%（クリア条件：${n}問中${Math.ceil(n * pass - 1e-9)}問正解）・${secs}秒`;
       if (current.wrong.length) r.weak.innerHTML = "<div class='muted'>間違えた問題</div>" + current.wrong.map(q => `<div class="miss">${esc(q.stem)}</div>`).join("");
       else r.weak.innerHTML = "<div class='muted'>全問正解</div>";
       if (cleared && !wasDone && chapterDone(st.chapter)) r.badge.innerHTML = `<div class="fb good"><div class="ttl">🏅 第${st.chapter.no}章「${esc(st.chapter.name)}」のバッジを獲得</div></div>`;

@@ -19,9 +19,9 @@ test("どの問題もステージと分野につながっている", () => {
   bad(Q.filter(q => !fieldIds.has(q.field)).map(q => `${q.id} field=${q.field}`), "存在しない分野");
 });
 
-test("どのステージにも十分な数の問題がある（5問以上）", () => {
+test("どのステージも3〜5問（1回5問まで）", () => {
   const n = {}; Q.forEach(q => n[q.stage] = (n[q.stage] || 0) + 1);
-  bad(stages.filter(s => (n[s.id] || 0) < 5).map(s => `${s.id} ${s.name}: ${n[s.id] || 0}問`), "問題が少ないステージ");
+  bad(stages.filter(s => (n[s.id] || 0) < 3 || (n[s.id] || 0) > 5).map(s => `${s.id} ${s.name}: ${n[s.id] || 0}問`), "3〜5問でないステージ");
 });
 
 test("問題文・解説・場面がそろっている", () => {

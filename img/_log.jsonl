@@ -1663,3 +1663,7 @@
 {"id": "e-qz4-1-d", "ok": true, "model": "gpt-image-2", "seconds": 72.2, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-11-11T00:28:19"}
 {"id": "qz4-1-e", "ok": true, "model": "gpt-image-2", "seconds": 61.7, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-11-11T00:28:26"}
 {"id": "e-qz4-1-e", "ok": true, "model": "gpt-image-2", "seconds": 71.2, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-11-11T00:29:02"}
+{"id": "f-runway-months", "ok": true, "model": "gpt-image-2", "seconds": 64.8, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-11-19T15:58:11"}
+{"id": "f-shield-budget", "ok": true, "model": "gpt-image-2", "seconds": 68.2, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-11-19T15:58:14"}
+{"id": "f-t11", "ok": true, "model": "gpt-image-2", "seconds": 76.4, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-11-19T15:58:23"}
+{"id": "f-t10", "ok": true, "model": "gpt-image-2", "seconds": 86.0, "error": "", "attempts": 1, "raw_size": "1536x1024", "at": "2026-11-19T15:58:32"}

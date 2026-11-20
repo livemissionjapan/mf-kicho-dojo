@@ -11,6 +11,7 @@ window.Store = (function () {
     stages: {},     // stageId -> {best, attempts, cleared, last, weak[]}
     diag: null,     // {fields:{f1:{c,t},…}, correct, total, at}
     hard: [],       // むずかしかった問題の id
+    lucky: [],      // たまたま当たった問題の id（サーバーへは hard 欄に "L:" を付けて送る）
     queue: [],      // 未送信の進捗ログ
     createdAt: new Date().toISOString()
   });
@@ -21,6 +22,7 @@ window.Store = (function () {
       const raw = localStorage.getItem(KEY);
       state = raw ? JSON.parse(raw) : empty();
       if (!state || state.version !== 2) state = empty();
+    if (!Array.isArray(state.lucky)) state.lucky = [];
     } catch (e) { state = empty(); }
     if (!state.deviceId) { state.deviceId = uuid(); save(); }
     return state;
@@ -49,6 +51,8 @@ window.Store = (function () {
   function recordDiagT(track, diag, log) { const s = load(); s.diagT = s.diagT || {}; s.diagT[track] = diag; s.queue.push(log); save(); }
   function toggleHard(qid, on) { const s = load(); const i = s.hard.indexOf(qid); if (on && i < 0) s.hard.push(qid); if (!on && i >= 0) s.hard.splice(i, 1); save(); }
   function isHard(qid) { return load().hard.includes(qid); }
+  function toggleLucky(qid, on) { const s = load(); const i = s.lucky.indexOf(qid); if (on && i < 0) s.lucky.push(qid); if (!on && i >= 0) s.lucky.splice(i, 1); save(); }
+  function isLucky(qid) { return load().lucky.includes(qid); }
   /* サーバーの記録を取り込む（良い方を残す） */
   function merge(remote) {
     const s = load();
@@ -58,12 +62,12 @@ window.Store = (function () {
     });
     if (remote.diag && remote.diag.fields && (!s.diag || (remote.diag.at || "") > (s.diag.at || ""))) s.diag = remote.diag;
     Object.entries(remote.diagT || {}).forEach(([t, d]) => { if (!d || !d.fields) return; s.diagT = s.diagT || {}; const l = s.diagT[t]; if (!l || (d.at || "") > (l.at || "")) s.diagT[t] = d; });
-    (remote.hard || []).forEach(q => { if (!s.hard.includes(q)) s.hard.push(q); });
+    (remote.hard || []).forEach(q => { if (q.startsWith("L:")) { q = q.slice(2); if (!s.lucky.includes(q)) s.lucky.push(q); } else if (!s.hard.includes(q)) s.hard.push(q); });
     save();
   }
   function logout() { const s = load(); s.pin = ""; save(); } // 名前と記録は残す（同じ人が入り直せば続きから）
   function reset() { state = empty(); state.deviceId = uuid(); save(); }
   function takeQueue() { return load().queue.slice(); }
   function dropFromQueue(ids) { const s = load(); s.queue = s.queue.filter(l => !ids.includes(l.logId)); save(); }
-  return { load, save, setUser, stage, recordStage, recordDiag, recordDiagT, toggleHard, isHard, merge, reset, logout, takeQueue, dropFromQueue, uuid };
+  return { load, save, setUser, stage, recordStage, recordDiag, recordDiagT, toggleHard, isHard, toggleLucky, isLucky, merge, reset, logout, takeQueue, dropFromQueue, uuid };
 })();

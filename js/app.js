@@ -40,6 +40,10 @@
   const trackStages = t => stagesFlat.filter(s => trackOf(s.chapter) === t);
   const overallRate = t => { const l = trackStages(t); return l.length ? l.filter(s => isCleared(s.id)).length / l.length : 0; };
 
+  /* 印の種類（むずかしかった／たまたま当たった） */
+  const MARK = { hard: { label: "むずかしかった", list: "むずかしかった問題" }, lucky: { label: "たまたま当たった", list: "たまたま当たった問題" } };
+  let markKind = "hard";
+
   /* ---------- 共通UI ---------- */
   function show(id) { document.querySelectorAll(".view").forEach(v => v.classList.remove("active")); $("#" + id).classList.add("active"); window.scrollTo({ top: 0 }); setCrumb(id); }
   /* ---------- 現在地（パンくず） ---------- */
@@ -51,7 +55,7 @@
     if (view === "name") parts.push({ label: "はじめに" });
     else if (view === "track") parts.push({ label: "マイページ", here: true });
     else if (view === "home") parts.push(top, { label: TRACK_NAME[homeTrack] + " ワールドマップ", here: true });
-    else if (view === "hard") parts.push(top, keiri, { label: "むずかしかった問題", here: true });
+    else if (view === "hard") parts.push(top, { label: MARK[markKind].list, here: true });
     else if (view === "finance") parts.push(top, { label: "財務の部屋", here: true });
     else if (view === "chapter" && current && current.chapterView) parts.push(top, keiri, { label: `第${current.chapterView.no}章 ${current.chapterView.name}`, here: true });
     else if ((view === "stage" || view === "result") && current) {
@@ -178,21 +182,22 @@
       </div></div>`;
       const eb = $("#exam-start"); if (eb) eb.addEventListener("click", startExam);
     }
-    const hardN = s.hard.length;
-    $("#hard-note").innerHTML = hardN ? `「むずかしかった」の印：${hardN}問 <button class="d-btn" id="hard-list" type="button">一覧</button>` : "";
-    if (hardN) $("#hard-list").addEventListener("click", showHardList);
+    $("#hard-note").innerHTML = ["hard", "lucky"].filter(k => s[k].length).map(k => `「${MARK[k].label}」の印：${s[k].length}問 <button class="d-btn" data-marks="${k}" type="button">一覧</button>`).join("　");
+    $("#hard-note").querySelectorAll("[data-marks]").forEach(b => b.addEventListener("click", () => showMarkList(b.dataset.marks)));
     $("#queue-note").textContent = s.queue.length ? `未送信の記録 ${s.queue.length} 件（次に送信します）` : "";
     show("home");
   }
-  function showHardList() {
+  /* 印（むずかしかった／たまたま当たった）の一覧。押すとその問題に直接飛ぶ */
+  function showMarkList(kind) {
+    markKind = MARK[kind] ? kind : "hard";
     const s = Store.load();
-    const items = s.hard.map(id => qById[id]).filter(Boolean);
+    const items = s[markKind].map(id => qById[id]).filter(Boolean);
     const box = $("#hard-box");
-    box.innerHTML = `<div class="row"><h2 style="margin:0">むずかしかった問題</h2><span class="sp"></span><button class="btn secondary" data-go="home" type="button">← マップ</button></div>` +
-      (items.length ? items.map(q => { const st = stagesFlat.find(x => x.id === q.stage); return `<div class="card hard-item"><div class="muted">${st ? `第${st.chapter.no}章 ${esc(st.name)}` : (q.stage === "exam" ? "卒業試験" : "実力診断")}・${esc(fieldOf(q.field) ? fieldOf(q.field).name : "")}</div><div class="stem" style="font-size:15px">${esc(q.stem)}</div><div class="muted exp">${expHtml(q.explanation)}</div><div class="row" style="margin-top:6px"><button class="d-btn" data-unhard="${esc(q.id)}" type="button">印を外す</button>${st ? `<button class="d-btn" data-stage="${esc(st.id)}" type="button">このステージをやり直す</button>` : ""}</div></div>`; }).join("") : "<p class='muted'>まだありません</p>");
-    box.querySelectorAll("[data-go=home]").forEach(b => b.addEventListener("click", () => renderHome()));
-    box.querySelectorAll("[data-unhard]").forEach(b => b.addEventListener("click", () => { Store.toggleHard(b.dataset.unhard, false); showHardList(); }));
-    box.querySelectorAll("[data-stage]").forEach(b => b.addEventListener("click", () => startStage(b.dataset.stage)));
+    box.innerHTML = `<div class="row"><h2 style="margin:0">${MARK[markKind].list}</h2><span class="sp"></span><button class="btn secondary" data-go="top" type="button">← マイページ</button></div><p class="muted">「この問題を解く」で、その問題から始まります。</p>` +
+      (items.length ? items.map(q => { const st = stagesFlat.find(x => x.id === q.stage); return `<div class="card hard-item"><div class="muted">${st ? `第${st.chapter.no}章 ${esc(st.name)}` : (q.stage === "exam" ? "卒業試験" : "実力診断")}・${esc(fieldOf(q.field) ? fieldOf(q.field).name : "")}</div><div class="stem" style="font-size:16px">${esc(q.stem)}</div><details class="muted exp"><summary>解説を見る</summary>${expHtml(q.explanation)}</details><div class="row" style="margin-top:6px"><button class="btn" data-solve="${esc(q.id)}" type="button">この問題を解く →</button><button class="d-btn" data-unmark="${esc(q.id)}" type="button">印を外す</button></div></div>`; }).join("") : "<p class='muted'>まだありません</p>");
+    box.querySelectorAll("[data-go=top]").forEach(b => b.addEventListener("click", () => window.Finance.renderTrack()));
+    box.querySelectorAll("[data-unmark]").forEach(b => b.addEventListener("click", () => { (markKind === "lucky" ? Store.toggleLucky : Store.toggleHard)(b.dataset.unmark, false); showMarkList(markKind); }));
+    box.querySelectorAll("[data-solve]").forEach(b => b.addEventListener("click", () => showQuestion(b.dataset.solve)));
     show("hard");
   }
 
@@ -226,10 +231,12 @@
     const st = stagesFlat.find(s => s.id === stId);
     const qs = qByStage[stId] || [];
     if (!qs.length) { toast("このステージの問題は準備中です"); return; }
-    current = { kind: "stage", chapter: st.chapter, stage: st, qs: shuffle(qs), i: 0, correct: 0, wrong: [], hard: [], fields: {}, started: Date.now(), answered: false };
+    current = { kind: "stage", chapter: st.chapter, stage: st, qs: shuffle(qs), i: 0, correct: 0, wrong: [], hard: [], lucky: [], fields: {}, started: Date.now(), answered: false };
     const idx = st.chapter.stages.findIndex(x => x.id === st.id) + 1;
     $("#st-title").textContent = `${st.chapter.no}-${idx}　${st.name}`;
     $("#st-aim").textContent = st.aim;
+    const ls = (window.LESSONS || {})[st.id];
+    $("#st-lesson").innerHTML = ls ? `<details class="card lesson" open><summary>📖 ${esc(ls.title)}</summary><div class="ls-body">${ls.html}</div></details>` : "";
     $("#st-pic").innerHTML = pic(st.img, "cover");
     setupStageDiagram(st.diagram);
     renderQuestion(); show("stage");
@@ -244,20 +251,20 @@
     const track = typeof t === "string" ? t : "keiri";
     const qs = diagQuestions(track);
     if (!qs.length) { toast("診断問題は準備中です"); return; }
-    current = { kind: "diag", track, chapter: null, stage: { id: track === "keiri" ? "diag" : "diag-" + track, name: C.diagnostic.name, pass: 0 }, qs: shuffle(qs), i: 0, correct: 0, wrong: [], hard: [], fields: {}, started: Date.now(), answered: false };
+    current = { kind: "diag", track, chapter: null, stage: { id: track === "keiri" ? "diag" : "diag-" + track, name: C.diagnostic.name, pass: 0 }, qs: shuffle(qs), i: 0, correct: 0, wrong: [], hard: [], lucky: [], fields: {}, started: Date.now(), answered: false };
     $("#st-title").textContent = "実力診断";
     $("#st-aim").textContent = "分からなくても気にせず、今の感覚で答えてください";
-    $("#st-pic").innerHTML = "";
+    $("#st-pic").innerHTML = ""; $("#st-lesson").innerHTML = "";
     setupStageDiagram(null);
     renderQuestion(); show("stage");
   }
   function startExam() {
     const qs = qByStage[C.exam.id] || [];
     if (!qs.length) { toast("卒業試験は準備中です"); return; }
-    current = { kind: "exam", chapter: null, stage: { id: C.exam.id, name: C.exam.name, pass: C.exam.pass }, qs: qs.slice().sort((a, b) => a.id.localeCompare(b.id)), i: 0, correct: 0, wrong: [], hard: [], fields: {}, started: Date.now(), answered: false };
+    current = { kind: "exam", chapter: null, stage: { id: C.exam.id, name: C.exam.name, pass: C.exam.pass }, qs: qs.slice().sort((a, b) => a.id.localeCompare(b.id)), i: 0, correct: 0, wrong: [], hard: [], lucky: [], fields: {}, started: Date.now(), answered: false };
     $("#st-title").textContent = C.exam.name;
     $("#st-aim").textContent = `まる食堂の1か月分を通します。${Math.round(C.exam.pass * 100)}%以上で合格`;
-    $("#st-pic").innerHTML = pic(C.exam.img, "cover");
+    $("#st-pic").innerHTML = pic(C.exam.img, "cover"); $("#st-lesson").innerHTML = "";
     setupStageDiagram(null);
     renderQuestion(); show("stage");
   }
@@ -288,14 +295,15 @@
     if (ok) current.correct++; else current.wrong.push(q);
     const fv = current.fields[q.field] || { c: 0, t: 0 }; fv.t++; if (ok) fv.c++; current.fields[q.field] = fv;
     const fb = $("#q-fb"); fb.className = "fb " + (ok ? "good" : "bad");
-    const hard = Store.isHard(q.id);
     fb.innerHTML = `<div class="ttl">${ok ? "正解！" : "惜しい"}${detail ? "　<span class='muted' style='font-weight:400'>" + esc(detail) + "</span>" : ""}</div>${pic("e-" + (q.img || q.id), "explain")}<div class="exp">${expHtml(q.explanation)}</div>
-      <div class="row" style="margin-top:8px"><span class="src">${esc(q.source || "")}</span><span class="sp"></span><button class="hardbtn${hard ? " on" : ""}" type="button" aria-pressed="${hard}">${hard ? "✓ むずかしかった" : "むずかしかった"}</button></div>`;
-    fb.querySelector(".hardbtn").addEventListener("click", ev => {
-      const b = ev.currentTarget; const on = !b.classList.contains("on");
-      b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); b.textContent = on ? "✓ むずかしかった" : "むずかしかった";
-      Store.toggleHard(q.id, on); const i = current.hard.indexOf(q.id); if (on && i < 0) current.hard.push(q.id); if (!on && i >= 0) current.hard.splice(i, 1);
-    });
+      <div class="row" style="margin-top:8px"><span class="src">${esc(q.source || "")}</span></div>
+      <div class="markbtns"><span class="muted">あとで見直す印：</span>${(ok ? ["hard", "lucky"] : ["hard"]).map(k => { const on = k === "lucky" ? Store.isLucky(q.id) : Store.isHard(q.id); return `<button class="hardbtn${on ? " on" : ""}" data-mark="${k}" type="button" aria-pressed="${on}">${on ? "✓ " : ""}${MARK[k].label}</button>`; }).join("")}</div>`;
+    fb.querySelectorAll("[data-mark]").forEach(b => b.addEventListener("click", () => {
+      const k = b.dataset.mark; const on = !b.classList.contains("on");
+      b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); b.textContent = (on ? "✓ " : "") + MARK[k].label;
+      (k === "lucky" ? Store.toggleLucky : Store.toggleHard)(q.id, on);
+      const l = current[k]; const i = l.indexOf(q.id); if (on && i < 0) l.push(q.id); if (!on && i >= 0) l.splice(i, 1);
+    }));
     const nx = $("#q-next"); nx.style.display = "";
     nx.textContent = current.i + 1 < current.qs.length ? "次の問題へ" : "結果を見る";
     nx.focus();
@@ -342,11 +350,11 @@
     },
     spot(q, box) {
       const sel = new Set(); const t = el("table", "ledger");
-      t.innerHTML = "<thead><tr>" + q.header.map(h => "<th>" + esc(h) + "</th>").join("") + "</tr></thead>";
+      t.innerHTML = "<thead><tr>" + q.header.map((h, j) => `<th${q.rows.every(r => isNum(r[j])) ? ' class="num"' : ""}>` + esc(h) + "</th>").join("") + "</tr></thead>";
       const tb = el("tbody");
       q.rows.forEach((row, i) => {
         const tr = el("tr", "pick");
-        tr.innerHTML = row.map(c => { const s = String(c); const num = /^[-−▲△]?[\d,]+(円)?$/.test(s.trim()); const neg = num && /^[-−▲△]/.test(s.trim()); return `<td class="${num ? "num" : ""}${neg ? " neg" : ""}">${esc(s)}</td>`; }).join("");
+        tr.innerHTML = row.map(c => { const s = String(c); const num = isNum(s); const neg = num && /^[-−▲△]/.test(s.trim()); return `<td class="${num ? "num" : ""}${neg ? " neg" : ""}">${num ? numHtml(s) : esc(s)}</td>`; }).join("");
         tr.addEventListener("click", () => { if (current.answered) return; sel.has(i) ? sel.delete(i) : sel.add(i); tr.classList.toggle("sel", sel.has(i)); btn.disabled = sel.size === 0; });
         tb.appendChild(tr);
       });
@@ -386,9 +394,15 @@
       box.appendChild(btn);
     }
   };
+  /* 数字だけのセル・選択肢（「約」付き・単位付きも含む）。表記をそろえて右揃えにする */
+  const NUM_RE = /^([-−＋+▲△]?)(約)?([-−]?[\d,]+(?:\.\d+)?)\s*(円|万円|千円|%|か月分?|年|倍|人|件|日|回|枚|台|本|店)?$/;
+  const isNum = s => NUM_RE.test(String(s).replace(/％/g, "%").trim());
+  /* 「約」の有無で数字の位置がずれないよう、「約」の場所を常に空けておく */
+  const numHtml = s => { const m = String(s).replace(/％/g, "%").trim().match(NUM_RE); return `<span class="nv"><i class="yk">${m[2] ? "約" : ""}</i><span class="val">${esc(m[1] + m[3] + (m[4] || ""))}</span></span>`; };
   function mcLike(q, box) {
-    const g = el("div", "choices"); const order = shuffle(q.choices.map((c, i) => i));
-    order.forEach((idx, k) => { const b = el("button", "choice", `<span class="k">${"ABCD"[k]}</span><span>${esc(q.choices[idx])}</span>`); b.type = "button"; b.dataset.idx = idx; b.addEventListener("click", () => { if (current.answered) return; lockChoices(g, idx, q.answer); finishQuestion(q, idx === q.answer); }); g.appendChild(b); });
+    const allNum = q.choices.every(isNum);
+    const g = el("div", "choices" + (allNum ? " numchoices" : "")); const order = shuffle(q.choices.map((c, i) => i));
+    order.forEach((idx, k) => { const b = el("button", "choice", `<span class="k">${"ABCD"[k]}</span>${allNum ? numHtml(q.choices[idx]) : `<span>${esc(q.choices[idx])}</span>`}`); b.type = "button"; b.dataset.idx = idx; b.addEventListener("click", () => { if (current.answered) return; lockChoices(g, idx, q.answer); finishQuestion(q, idx === q.answer); }); g.appendChild(b); });
     box.appendChild(g);
   }
   function lockChoices(g, picked, answer) {
@@ -399,7 +413,7 @@
   async function finish() {
     const n = current.qs.length, rate = current.correct / n, secs = Math.round((Date.now() - current.started) / 1000);
     const s = Store.load();
-    const base = { logId: Store.uuid(), at: new Date().toISOString(), name: s.name, deviceId: s.deviceId, correct: current.correct, total: n, rate: Math.round(rate * 1000) / 1000, seconds: secs, hard: current.hard.join(";"), fields: JSON.stringify(current.fields), app: C.version };
+    const base = { logId: Store.uuid(), at: new Date().toISOString(), name: s.name, deviceId: s.deviceId, correct: current.correct, total: n, rate: Math.round(rate * 1000) / 1000, seconds: secs, hard: current.hard.concat(current.lucky.map(x => "L:" + x)).join(";"), fields: JSON.stringify(current.fields), app: C.version };
     const r = { title: $("#r-title"), big: $("#r-big"), sub: $("#r-sub"), map: $("#r-map"), weak: $("#r-weak"), badge: $("#r-badge") };
     r.badge.innerHTML = ""; r.map.innerHTML = ""; r.weak.innerHTML = "";
     let cleared = false, next = null, stageForRetry = null;
@@ -542,10 +556,11 @@
     const chart = (title, fs) => `<div class="mp-chart"><h3>${esc(title)}</h3>${radar(fs)}${strongWeak(fs)}</div>`;
     const charts = (has(C.fields) ? chart("記帳・決算の得意・苦手", C.fields) : "") + XT.map(x => has(x.fields || []) ? chart(x.name + "の得意・苦手", x.fields) : "").join("");
     host.innerHTML = `
-      <div class="mp-tiles">${tile("記帳・決算の道", "keiri")}${XT.map(x => tile(TRACK_NAME[x.track], x.track)).join("")}<div class="mp-tile"><span>むずかしかった印</span><b>${s.hard.length}<small>問</small></b><small class="muted">${s.hard.length ? "見直すと伸びます" : "まだありません"}</small></div></div>
+      <div class="mp-tiles">${tile("記帳・決算の道", "keiri")}${XT.map(x => tile(TRACK_NAME[x.track], x.track)).join("")}${["hard", "lucky"].map(k => `<button class="mp-tile mp-mark" data-marks="${k}" type="button"><span>${MARK[k].label}</span><b>${s[k].length}<small>問</small></b><small class="muted">${s[k].length ? "押すと一覧 →" : "まだありません"}</small></button>`).join("")}</div>
       ${charts ? `<div class="mp-charts">${charts}</div>`
         : `<div class="mp-empty"><p class="muted">まだ記録がありません。好きな章から始めると、ここに進み具合と得意・苦手のグラフが出ます。実力診断を受けると、全分野の得意・苦手が一度に分かります。</p><button class="btn" id="mp-diag" type="button">実力診断を受ける</button></div>`}`;
     const b = host.querySelector("#mp-diag"); if (b) b.addEventListener("click", () => startDiag());
+    host.querySelectorAll("[data-marks]").forEach(x => x.addEventListener("click", () => showMarkList(x.dataset.marks)));
   }
 
   /* 検証用フック */

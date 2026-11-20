@@ -53,7 +53,7 @@
         <div class="adm-msg" id="adm-msg">${esc(msg || "")}</div>
         <button class="btn block" type="submit">入る</button>
       </form>
-      <p class="muted" style="font-size:12px;margin-top:10px">最初の管理者は ID「admin」。初期パスワードは進捗スプレッドシートの「管理者」タブにだけ書かれています（初回ログインで変更すると消えます）。IDは「管理者」タブのA列を書き換えれば、メールアドレスにできます。</p>
+      <p class="muted" style="margin-top:10px">最初の管理者は ID「admin」。初期パスワードは進捗スプレッドシートの「管理者」タブにだけ書かれています（初回ログインで変更すると消えます）。IDは「管理者」タブのA列を書き換えれば、メールアドレスにできます。</p>
       <button class="btn secondary" id="adm-back" type="button">← 経理・財務アカデミーへ戻る</button></div>`;
     $("#adm-back").onclick = leave;
     $("#adm-login").onsubmit = async e => {
@@ -137,7 +137,7 @@
     if (!D) return load();
     show();
     const tabs = [["overview", "全体"], ["people", "人ごと"], ["stages", "ステージ"], ["staff", "スタッフのID・パス"], ["settings", "設定"]];
-    box().innerHTML = `<div class="row adm-head"><h1 style="margin:0">🔒 管理者ダッシュボード</h1><span class="sp"></span><span class="muted" style="font-size:12px">${esc(D.me)} でログイン中</span><button class="d-btn" id="adm-reload" type="button">更新</button><button class="d-btn" id="adm-out" type="button">ログアウト</button><button class="d-btn" id="adm-leave" type="button">道場へ戻る</button></div>
+    box().innerHTML = `<div class="row adm-head"><h1 style="margin:0">🔒 管理者ダッシュボード</h1><span class="sp"></span><span class="muted">${esc(D.me)} でログイン中</span><button class="d-btn" id="adm-reload" type="button">更新</button><button class="d-btn" id="adm-out" type="button">ログアウト</button><button class="d-btn" id="adm-leave" type="button">道場へ戻る</button></div>
       <div class="adm-tabs" role="tablist">${tabs.map(([k, v]) => `<button type="button" role="tab" class="${tab === k ? "on" : ""}" data-tab="${k}">${v}</button>`).join("")}</div>
       <div id="adm-body"></div>`;
     $("#adm-reload").onclick = load; $("#adm-out").onclick = logout; $("#adm-leave").onclick = leave;
@@ -254,7 +254,7 @@
       ${us.map(u => `<tr class="${u.status === "停止" ? "off" : ""}"><td><b>${esc(u.display || "—")}</b><br><small class="muted">${esc(u.name)}</small></td><td>${esc(u.status)}</td><td>${day(u.first)}<br><small class="muted">${esc(u.source)}</small></td><td>${ago(u.last)}</td><td>${esc(u.memo)}</td>
         <td class="adm-ops"><button class="d-btn" data-op="pass" data-n="${esc(u.name)}" type="button">パス再発行</button><button class="d-btn" data-op="status" data-n="${esc(u.name)}" type="button">${u.status === "停止" ? "再開" : "停止"}</button><button class="d-btn" data-op="memo" data-n="${esc(u.name)}" type="button">名前・メモ</button><button class="d-btn danger" data-op="del" data-n="${esc(u.name)}" type="button">削除</button></td></tr>`).join("") || '<tr><td colspan="6" class="muted">まだいません</td></tr>'}
       </tbody></table></div>
-      <p class="muted" style="font-size:12px">停止：ログインも記録もできなくなります（記録は残る）。削除：登録だけ消えます。進捗ログは残るので、同じIDで追加し直すと記録が戻ります。</p></div>`;
+      <p class="muted">停止：ログインも記録もできなくなります（記録は残る）。削除：登録だけ消えます。進捗ログは残るので、同じIDで追加し直すと記録が戻ります。</p></div>`;
     $("#sf-gen").onclick = () => { $("#sf-pass").value = genPin(); };
     $("#sf-add").onsubmit = async e => {
       e.preventDefault(); $("#sf-msg").textContent = "登録しています…";
@@ -284,7 +284,7 @@
         ${D.admins.map(a => `<tr><td>${esc(a.id)}${a.id === D.me ? ' <small class="muted">（自分）</small>' : ""}${a.mustChange ? ' <small class="muted">初回変更待ち</small>' : ""}</td><td>${day(a.created)}</td><td>${ago(a.lastLogin)}</td><td class="adm-ops">${a.id === D.me ? '<button class="d-btn" id="ad-mine" type="button">自分のパスワードを変更</button>' : `<button class="d-btn" data-ad="reset" data-id="${esc(a.id)}" type="button">パスワード再設定</button><button class="d-btn danger" data-ad="del" data-id="${esc(a.id)}" type="button">削除</button>`}</td></tr>`).join("")}
       </tbody></table></div>
       <form id="ad-add" class="adm-form" style="margin-top:10px"><input class="text" id="ad-id" type="email" placeholder="新しい管理者ID（メールアドレス）" autocomplete="off" autocapitalize="off" required><input class="text" id="ad-pass" type="password" placeholder="仮パスワード（8文字以上）" autocomplete="new-password" minlength="8" required><button class="btn" type="submit">管理者を追加</button></form>
-      <p class="muted" style="font-size:12px">追加した人・再設定した人は、初回ログインで自分のパスワードに変えるまで中を見られません。</p><div class="adm-msg" id="ad-msg"></div></div>
+      <p class="muted">追加した人・再設定した人は、初回ログインで自分のパスワードに変えるまで中を見られません。</p><div class="adm-msg" id="ad-msg"></div></div>
       <div class="card"><h2>元データ</h2><p class="muted">進捗はスプレッドシートの「進捗ログ」が正本です。${D.sheetUrl ? `<a class="btn secondary" style="margin-top:6px" href="${esc(D.sheetUrl)}" target="_blank" rel="noopener">スプレッドシートを開く</a>` : ""}</p></div>`;
     $("#st-self").onchange = async e => { const j = await api("setSetting", { selfRegister: e.target.checked }); if (!j.ok) { toast(err(j)); e.target.checked = !e.target.checked; return; } D.settings = j.settings; toast(j.settings.selfRegister ? "自分で登録できるようにしました" : "管理者が追加した人だけにしました"); };
     $("#ad-mine").onclick = () => renderChangePass(false);

@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%231f5fbf%27/%3E%3Ctext x=%2732%27 y=%2744%27 font-size=%2734%27 text-anchor=%27middle%27 fill=%27%23fff%27 font-weight=%27700%27%3E帳%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/app.css?v=20261120">
 </head>
 <body>
 <div class="app">
@@ -28,7 +28,7 @@
         <input class="text" id="name-input" placeholder="例：hanako@example.com" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="username" required>
         <label class="lbl" for="pin-input" style="margin-top:10px">パス</label>
         <input class="text" id="pin-input" type="password" placeholder="例：2468" minlength="4" maxlength="32" autocomplete="current-password" required>
-        <p class="muted" style="font-size:13px">IDとパスは管理者から受け取ったものを入れてください。別の端末でも、同じIDとパスで続きから始められます。</p>
+        <p class="muted">IDとパスは管理者から受け取ったものを入れてください。別の端末でも、同じIDとパスで続きから始められます。</p>
         <div class="muted" id="name-msg" style="min-height:1.4em;color:var(--ng)"></div>
         <button class="btn block" id="name-go" type="submit">はじめる</button>
       </form>
@@ -43,23 +43,23 @@
       <div id="mypage"></div>
     </div>
     <h2 class="tracks-h">今日はどれを学びますか？</h2>
-    <p class="muted">記帳・決算は「日々の仕訳を正しく」、財務は「決算書の数字を読んで会社の状態を知る」、飲食店の数字は「お店の数字の意味を読む」、資金繰りは「お金がいつ入り、いつ出るかを先まで読む」。どの道にも、問題と実力診断があります。</p>
+    <p class="muted">上から大事な順です。まずは①記帳・決算で「日々の仕訳を正しく」。次に②飲食店の数字で「お店の数字の意味を読む」、③資金繰りで「お金がいつ入り、いつ出るかを先まで読む」、④財務で「決算書の数字を読んで会社の状態を知る」。どの道にも、問題と実力診断があります。</p>
     <div class="tracks">
       <button class="track-card" id="go-keiri" type="button">
         <img src="img/t-keiri.jpg" alt="" onerror="this.classList.add('noimg')">
-        <span class="track-tx"><span class="track-tag">記帳・決算</span><b>記帳・決算を学ぶ</b><span class="muted">簿記の土台から決算整理・飲食店の記帳まで11の章。好きな章から始められる（実力診断は受けなくてもよい）</span><span class="track-go">記帳・決算の道へ →</span></span>
-      </button>
-      <button class="track-card zaimu" id="go-zaimu" type="button">
-        <img src="img/t-zaimu.jpg" alt="" onerror="this.classList.add('noimg')">
-        <span class="track-tx"><span class="track-tag">財務</span><b>財務を学ぶ</b><span class="muted">視点・思考回路・知識カードで、数字を経営にどう使うかを学ぶ</span><span class="track-go">財務の道へ →</span></span>
+        <span class="track-tx"><span class="track-tag">① 記帳・決算</span><b>記帳・決算を学ぶ</b><span class="muted">簿記の土台から決算整理・飲食店の記帳まで11の章。好きな章から始められる（実力診断は受けなくてもよい）</span><span class="track-go">記帳・決算の道へ →</span></span>
       </button>
       <button class="track-card inshoku" id="go-inshoku" type="button">
         <img src="img/t-inshoku.jpg" alt="" onerror="this.classList.add('noimg')">
-        <span class="track-tx"><span class="track-tag">飲食店</span><b>飲食店の数字を学ぶ</b><span class="muted">客数×客単価・原価率・人件費・FL・損益分岐点・資金繰り・月次報告。飲食店の数字が何を意味しているかを読み取れるようになる</span><span class="track-go">飲食店の道へ →</span></span>
+        <span class="track-tx"><span class="track-tag">② 飲食店</span><b>飲食店の数字を学ぶ</b><span class="muted">客数×客単価・原価率・人件費・FL・損益分岐点・資金繰り・月次報告。飲食店の数字が何を意味しているかを読み取れるようになる</span><span class="track-go">飲食店の道へ →</span></span>
       </button>
       <button class="track-card shikin" id="go-shikin" type="button">
         <img src="img/t-shikin.jpg" alt="" onerror="this.classList.add('noimg')">
-        <span class="track-tx"><span class="track-tag">資金繰り</span><b>資金繰りを学ぶ</b><span class="muted">資金繰り表の形・区分・入金と支払のずれ・作り方・借入と返済・運転資金。お金がいつ入り、いつ出るかを先まで読めるようになる</span><span class="track-go">資金繰りの道へ →</span></span>
+        <span class="track-tx"><span class="track-tag">③ 資金繰り</span><b>資金繰りを学ぶ</b><span class="muted">資金繰り表の形・区分・入金と支払のずれ・作り方・借入と返済・運転資金。お金がいつ入り、いつ出るかを先まで読めるようになる</span><span class="track-go">資金繰りの道へ →</span></span>
+      </button>
+      <button class="track-card zaimu" id="go-zaimu" type="button">
+        <img src="img/t-zaimu.jpg" alt="" onerror="this.classList.add('noimg')">
+        <span class="track-tx"><span class="track-tag">④ 財務</span><b>財務を学ぶ</b><span class="muted">視点・思考回路・知識カードで、数字を経営にどう使うかを学ぶ</span><span class="track-go">財務の道へ →</span></span>
       </button>
     </div>
   </section>
@@ -75,12 +75,12 @@
     <div class="row" style="margin:8px 0"><button class="btn secondary" data-go="track" type="button">← マイページ</button></div>
     <div class="card hero">
       <svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle class="track" cx="50" cy="50" r="42"/><circle class="bar" id="ring-bar" cx="50" cy="50" r="42"/><text id="ring-text" x="50" y="57" text-anchor="middle">0%</text></svg>
-      <div><h1 style="margin:0" id="home-title">ワールドマップ</h1><div class="muted" id="home-intro" style="font-size:13px"></div><div class="muted" id="home-sub"></div><div class="muted" id="hard-note" style="font-size:13px"></div><div class="muted" id="queue-note" style="font-size:12px"></div></div>
+      <div><h1 style="margin:0" id="home-title">ワールドマップ</h1><div class="muted" id="home-intro"></div><div class="muted" id="home-sub"></div><div class="muted" id="hard-note"></div><div class="muted" id="queue-note"></div></div>
     </div>
     <div class="card" id="diag-card"></div>
     <div class="map" id="map"></div>
     <div class="card" id="exam-card"></div>
-    <p class="muted" style="font-size:13px">● クリア済み　◎ 挑戦できる　○ まだ開いていない。章はどこからでも入れます</p>
+    <p class="muted">● クリア済み　◎ 挑戦できる　○ まだ開いていない。章はどこからでも入れます</p>
   </section>
 
   <!-- むずかしかった問題 -->
@@ -99,9 +99,10 @@
 
   <!-- ステージ -->
   <section id="stage" class="view">
-    <div class="row" style="margin:8px 0"><button class="btn secondary" id="st-back" type="button">← 戻る</button><span class="sp"></span><span class="muted" id="st-aim" style="font-size:12px"></span></div>
+    <div class="row" style="margin:8px 0"><button class="btn secondary" id="st-back" type="button">← 戻る</button></div><p class="st-aim" id="st-aim"></p>
+    <div id="st-lesson"></div>
     <div id="st-pic"></div>
-    <details class="card dia" id="st-dia"><summary>図解を見る：<span id="st-dia-title"></span></summary><div id="st-diagram"></div></details>
+    <details class="card dia" id="st-dia"><summary><span>図解を見る：<span id="st-dia-title"></span></span></summary><div id="st-diagram"></div></details>
     <div class="card">
       <h2 id="st-title"></h2>
       <div class="qmeta" id="q-meta"></div>
@@ -126,7 +127,7 @@
         <button class="btn" id="r-retry" type="button">もう一度</button>
         <button class="btn secondary" id="r-chapter" type="button">章に戻る</button>
       </div>
-      <p class="muted" style="font-size:12px;margin-top:14px"><span id="r-send"></span> <button class="d-btn" id="r-resend" type="button">再送</button></p>
+      <p class="muted" style="margin-top:14px"><span id="r-send"></span> <button class="d-btn" id="r-resend" type="button">再送</button></p>
     </div>
   </section>
 
@@ -157,12 +158,13 @@
 <script src="data/shikin.js"></script>
 <script src="data/zaimu.js"></script>
 <script src="data/split.js"></script>
+<script src="data/lessons.js?v=20261120"></script>
 <script src="js/diagrams.js"></script>
-<script src="js/store.js"></script>
+<script src="js/store.js?v=20261120"></script>
 <script src="js/sheet.js"></script>
 <script src="data/finance.js"></script>
-<script src="js/finance.js"></script>
-<script src="js/app.js"></script>
-<script src="js/admin.js"></script>
+<script src="js/finance.js?v=20261120"></script>
+<script src="js/app.js?v=20261120"></script>
+<script src="js/admin.js?v=20261120"></script>
 </body>
 </html>

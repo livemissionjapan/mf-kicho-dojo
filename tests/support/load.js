@@ -3,7 +3,7 @@ const fs = require("fs"), path = require("path"), vm = require("vm");
 const ROOT = path.resolve(__dirname, "..", "..");
 function load() {
   const html = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
-  const srcs = [...html.matchAll(/<script src="(data\/[^"]+)"/g)].map(m => m[1]);
+  const srcs = [...html.matchAll(/<script src="(data\/[^"?]+)/g)].map(m => m[1]);
   const window = {}; const ctx = vm.createContext({ window, console });
   for (const s of srcs) vm.runInContext(fs.readFileSync(path.join(ROOT, s), "utf8"), ctx, { filename: s });
   const W = window;

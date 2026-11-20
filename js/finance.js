@@ -96,7 +96,7 @@
       <div class="card">
         <h2>セッション一覧</h2>
         ${F.sessions.map(s => `<div class="sess"><b>${esc(s.label)}</b><span class="muted">${esc(s.when)}・${s.minutes}分</span><p>${esc(s.theme)}</p></div>`).join("")}
-        <p class="muted" style="font-size:12px">顧客名・実際の金額は伏せて、考え方と制度の知識だけを載せています。</p>
+        <p class="muted">顧客名・実際の金額は伏せて、考え方と制度の知識だけを載せています。</p>
       </div>`;
 
     const box = $("#finance-box");

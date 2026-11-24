@@ -28,6 +28,7 @@
   ALLCH.forEach(ch => ch.stages.forEach(st => stagesFlat.push({ ...st, chapter: ch })));
   const qByStage = {};
   Q.forEach(q => { (qByStage[q.stage] = qByStage[q.stage] || []).push(q); });
+  Object.values(qByStage).forEach(l => l.sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0)); // 出題は問題IDの順（毎回同じ）
   const qById = {}; Q.forEach(q => qById[q.id] = q);
 
   /* ---------- 進捗の判定 ---------- */

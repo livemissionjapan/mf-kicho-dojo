@@ -57,7 +57,7 @@ const server = http.createServer((req, res) => {
   let f = path.join(ROOT, decodeURIComponent(u.pathname === '/' ? '/index.html' : u.pathname));
   if (!fs.existsSync(f)) { res.writeHead(404); return res.end(); }
   let body = fs.readFileSync(f);
-  if (f.endsWith('index.html')) body = body.toString().replace(/window\.GAS_URL = "[^"]*"/, `window.GAS_URL = "http://localhost:${PORT}/exec"`);
+  if (f.endsWith('index.html')) body = body.toString().replace(/window\.GAS_URL = "[^"]*"/, `window.GAS_URL = "http://localhost:${PORT}/exec"`).replace(/<link[^>]*fonts\.googleapis\.com[^>]*>\n?/g, "") /* テストは外のネットに頼らない（Webフォントの読み込みで止まらないように） */;
   res.writeHead(200, { 'Content-Type': (types[path.extname(f)] || 'application/octet-stream') + '; charset=utf-8' }); res.end(body);
 });
 server.listen(0, '127.0.0.1', () => { PORT = server.address().port;

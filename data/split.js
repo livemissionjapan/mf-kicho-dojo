@@ -12,7 +12,7 @@
     T.chapters.forEach(function (ch) {
       var out = [];
       ch.stages.forEach(function (st) {
-        var qs = by[st.id] || [], n = qs.length;
+        var qs = (by[st.id] || []).slice().sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; }), n = qs.length; // 問題IDの順（a, b, c…）に並べてから分ける
         if (n <= MAX) { if (n && n < MAX) st.pass = (n - 1) / n; out.push(st); return; }
         var parts = Math.ceil(n / MAX), base = Math.floor(n / parts), extra = n % parts, at = 0;
         for (var p = 0; p < parts; p++) {

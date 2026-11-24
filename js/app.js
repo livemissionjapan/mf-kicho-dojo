@@ -231,7 +231,8 @@
     const st = stagesFlat.find(s => s.id === stId);
     const qs = qByStage[stId] || [];
     if (!qs.length) { toast("このステージの問題は準備中です"); return; }
-    current = { kind: "stage", chapter: st.chapter, stage: st, qs: shuffle(qs), i: 0, correct: 0, wrong: [], hard: [], lucky: [], fields: {}, started: Date.now(), answered: false };
+    current = { kind: "stage", chapter: st.chapter, stage: st, qs: qs.slice(), // 出題の順番は毎回同じ（誰がどこで間違えたかを比べられるように）
+      i: 0, correct: 0, wrong: [], hard: [], lucky: [], fields: {}, started: Date.now(), answered: false };
     const idx = st.chapter.stages.findIndex(x => x.id === st.id) + 1;
     $("#st-title").textContent = `${st.chapter.no}-${idx}　${st.name}`;
     $("#st-aim").textContent = st.aim;
@@ -241,17 +242,18 @@
     setupStageDiagram(st.diagram);
     renderQuestion(); show("stage");
   }
-  /* 実力診断の問題：記帳・決算は診断用の30問。ほかの道は各ステージから1問ずつ（最大24問・毎回入れ替わる） */
+  /* 実力診断の問題：記帳・決算は診断用の30問。ほかの道は各ステージの1問目を、道の順に（最大24問・毎回同じ問題を同じ順番で） */
   function diagQuestions(t) {
     if (!t || t === "keiri") return qByStage.diag || [];
-    const picks = trackStages(t).map(st => { const l = qByStage[st.id] || []; return l.length ? l[Math.floor(Math.random() * l.length)] : null; }).filter(Boolean);
-    return shuffle(picks).slice(0, 24);
+    const picks = trackStages(t).filter(st => !st.base || st.base === st.id).map(st => (qByStage[st.id] || [])[0]).filter(Boolean);
+    if (picks.length <= 24) return picks;
+    return Array.from({ length: 24 }, (_, i) => picks[Math.floor(i * picks.length / 24)]);
   }
   function startDiag(t) {
     const track = typeof t === "string" ? t : "keiri";
     const qs = diagQuestions(track);
     if (!qs.length) { toast("診断問題は準備中です"); return; }
-    current = { kind: "diag", track, chapter: null, stage: { id: track === "keiri" ? "diag" : "diag-" + track, name: C.diagnostic.name, pass: 0 }, qs: shuffle(qs), i: 0, correct: 0, wrong: [], hard: [], lucky: [], fields: {}, started: Date.now(), answered: false };
+    current = { kind: "diag", track, chapter: null, stage: { id: track === "keiri" ? "diag" : "diag-" + track, name: C.diagnostic.name, pass: 0 }, qs: qs.slice(), i: 0, correct: 0, wrong: [], hard: [], lucky: [], fields: {}, started: Date.now(), answered: false };
     $("#st-title").textContent = "実力診断";
     $("#st-aim").textContent = "分からなくても気にせず、今の感覚で答えてください";
     $("#st-pic").innerHTML = ""; $("#st-lesson").innerHTML = "";

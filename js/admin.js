@@ -185,6 +185,30 @@
     host.querySelectorAll("[data-person]").forEach(b => b.onclick = () => { tab = "people"; person = b.dataset.person; render(); });
   }
 
+  /* 分野ごとの点数（100点満点）：その分野で挑戦したステージの最高正答率の平均。まだ無ければ実力診断の正答率 */
+  const tFields = tid => tid === "keiri" ? C.fields : (([I, window.SHIKIN, window.ZAIMU].filter(Boolean).find(x => (x.track || "inshoku") === tid) || {}).fields || []);
+  function pScore(p, fid) {
+    const ids = Object.keys(stageInfo).filter(id => stageInfo[id].chapter.field === fid && p.stages[id]);
+    if (ids.length) return ids.reduce((a, id) => a + (p.stages[id].best || 0), 0) / ids.length;
+    const d = [p.diag].concat(Object.values(p.diagT || {})).find(x => x && x.fields && x.fields[fid] && x.fields[fid].t);
+    return d ? d.fields[fid].c / d.fields[fid].t : null;
+  }
+  function scoreTables() {
+    const cell = v => v == null ? '<td class="muted">—</td>' : `<td><span class="badge ${tone(v)}">${Math.round(v * 100)}</span></td>`;
+    const avg = l => { const x = l.filter(v => v != null); return x.length ? x.reduce((a, b) => a + b, 0) / x.length : null; };
+    return TRACKS.map(t => {
+      const fs = tFields(t.id); if (!fs.length) return "";
+      const rows = D.people.map(p => { const sc = fs.map(f => pScore(p, f.id)); return { p, sc, total: avg(sc) }; }).filter(r => r.total != null).sort((a, b) => b.total - a.total);
+      if (!rows.length) return "";
+      const team = fs.map((_, i) => avg(rows.map(r => r.sc[i])));
+      return `<div class="card"><h2>${esc(t.name)}：分野ごとの点数（100点満点）</h2><p class="muted" style="margin-top:0">点数は、その分野で挑戦したステージの最高正答率の平均です（まだ無ければ実力診断の正答率）。総合の高い順に並べています。</p>
+        <div class="adm-table"><table><thead><tr><th>名前</th><th>総合</th>${fs.map(f => `<th title="${esc(f.name)}">${esc(f.short || f.name)}</th>`).join("")}</tr></thead><tbody>
+        ${rows.map(r => `<tr><td>${esc(r.p.label)}</td>${cell(r.total)}${r.sc.map(cell).join("")}</tr>`).join("")}
+        <tr><td><b>チーム平均</b></td>${cell(avg(rows.map(r => r.total)))}${team.map(cell).join("")}</tr>
+        </tbody></table></div></div>`;
+    }).join("");
+  }
+
   /* 人ごと */
   function renderPeople(host) {
     if (person) return renderPerson(host, D.people.find(p => p.name === person));
@@ -195,7 +219,7 @@
         <td>${p.diag ? `<span class="badge ${tone(p.diag.rate)}">${pct(p.diag.rate)}</span>` : "—"}</td>
         <td>${p.exam ? (p.exam.cleared ? '<span class="badge gold">合格</span>' : pct(p.exam.best)) : "—"}</td>
         <td>${mins(p.seconds)}</td><td class="${p.last && Date.now() - new Date(p.last) > 14 * 864e5 ? "stale" : ""}">${ago(p.last)}</td></tr>`).join("") || `<tr><td colspan="9" class="muted">まだ受講者がいません</td></tr>`}
-      </tbody></table></div></div>`;
+      </tbody></table></div></div>` + scoreTables();
     host.querySelectorAll("[data-person]").forEach(b => b.onclick = () => { person = b.dataset.person; render(); });
   }
   function renderPerson(host, p) {

@@ -550,14 +550,23 @@
     const names = l => l.map(x => esc(x[0].name)).join("・");
     return `<div class="mp-sw">${top.length ? `<span class="mp-good">得意　${names(top)}</span>` : ""}${low.length ? `<span class="mp-weak">のびしろ　${names(low)}</span>` : ""}</div>`;
   }
+  /* 分野ごとの点数（100点満点）。点数＝その分野で挑戦したステージの最高正答率の平均。人どうしで比べられるように数字で出す */
+  function scoreList(fields) {
+    const rows = fields.map(f => {
+      const v = fieldScore(f.id), all = stagesFlat.filter(st => st.chapter.field === f.id), done = all.filter(st => Store.stage(st.id)).length, p = v == null ? null : Math.round(v * 100);
+      return `<div class="mp-score"><span class="mp-score-name" title="${esc(f.name)}">${esc(f.name)}</span><div class="fb-bar"><i class="${p == null ? "" : tone(p)}" style="width:${p || 0}%"></i></div><b>${p == null ? "—" : p + "点"}</b><small class="muted">${done}/${all.length}</small></div>`;
+    });
+    const vals = fields.map(f => fieldScore(f.id)).filter(v => v != null), avg = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 100) : null;
+    return `<div class="mp-total">総合 <b>${avg == null ? "—" : avg}</b>点<small class="muted">／100点</small></div><div class="mp-scores">${rows.join("")}</div><p class="muted mp-score-note">点数は、その分野で挑戦したステージの最高正答率の平均です。右の数字は、挑戦したステージの数です。</p>`;
+  }
   function renderMyPage(host) {
     if (!host) return;
     const s = Store.load();
     const tile = (label, t) => { const l = trackStages(t), n = l.filter(x => isCleared(x.id)).length, p = pct(n, l.length); return `<div class="mp-tile"><span>${esc(label)}</span><b>${p}<small>%</small></b><div class="fb-bar"><i class="ok" style="width:${p}%"></i></div><small class="muted">${n}/${l.length} ステージ</small></div>`; };
     const insF = INS.fields || [];
     const has = fs => fs.some(f => fieldScore(f.id) != null);
-    const chart = (title, fs) => `<div class="mp-chart"><h3>${esc(title)}</h3>${radar(fs)}${strongWeak(fs)}</div>`;
-    const charts = (has(C.fields) ? chart("記帳・決算の得意・苦手", C.fields) : "") + XT.map(x => has(x.fields || []) ? chart(x.name + "の得意・苦手", x.fields) : "").join("");
+    const chart = (title, fs) => `<div class="mp-chart"><h3>${esc(title)}</h3>${radar(fs)}${scoreList(fs)}${strongWeak(fs)}</div>`;
+    const charts = (has(C.fields) ? chart("記帳・決算の点数", C.fields) : "") + XT.map(x => has(x.fields || []) ? chart(x.name + "の点数", x.fields) : "").join("");
     host.innerHTML = `
       <div class="mp-tiles">${tile("記帳・決算の道", "keiri")}${XT.map(x => tile(TRACK_NAME[x.track], x.track)).join("")}${["hard", "lucky"].map(k => `<button class="mp-tile mp-mark" data-marks="${k}" type="button"><span>${MARK[k].label}</span><b>${s[k].length}<small>問</small></b><small class="muted">${s[k].length ? "押すと一覧 →" : "まだありません"}</small></button>`).join("")}</div>
       ${charts ? `<div class="mp-charts">${charts}</div>`

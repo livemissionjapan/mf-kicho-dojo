@@ -458,3 +458,13 @@ header.top .who button{white-space:nowrap;flex:none}
 .nv .yk{font-style:normal;font-size:.9em;margin-right:1px}
 .numchoices .choice .nv{min-width:7.5em}
 .ledger th.num{text-align:right}
+
+/* マイページ：分野ごとの点数 */
+.mp-total{text-align:center;font-size:14px;font-weight:700;margin:4px 0 8px}
+.mp-total b{font-size:28px;color:var(--accent);margin:0 2px}
+.mp-scores{display:grid;gap:6px;margin-bottom:6px}
+.mp-score{display:grid;grid-template-columns:minmax(0,1fr) minmax(50px,90px) 48px 34px;gap:6px;align-items:center;font-size:13px}
+.mp-score-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp-score b{text-align:right}
+.mp-score small{text-align:right;font-size:11px}
+.mp-score-note{font-size:11px;margin:2px 0 8px}
